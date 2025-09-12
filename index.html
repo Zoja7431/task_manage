@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Минималистичный таск-менеджер</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --light-bg: #f8f9fa;
+            --dark-text: #2d3436;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .task-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .priority-high {
+            border-left-color: #e84118;
+        }
+        
+        .priority-medium {
+            border-left-color: #fbc531;
+        }
+        
+        .priority-low {
+            border-left-color: #4cd137;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        .tag-badge {
+            background-color: #dfe6e9;
+            color: #636e72;
+            font-weight: normal;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        .welcome-container {
+            max-width: 600px;
+        }
+        
+        .task-completed {
+            background-color: #f1f2f6;
+        }
+        
+        .task-completed .task-title {
+            text-decoration: line-through;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#" onclick="showPage('home')">TaskFlow</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('home')">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('weekly')">Неделя</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="#" class="btn btn-outline-primary me-2" onclick="showPage('login')">Вход</a>
+                    <a href="#" class="btn btn-primary" onclick="showPage('register')">Регистрация</a>
+                </div>
+                <div class="d-flex authenticated-user" style="display: none !important;">
+                    <a href="#" class="btn btn-outline-secondary me-2" onclick="showPage('profile')">Профиль</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <!-- Главная страница -->
+        <div id="home-page" class="page-section active">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Мои задачи</h2>
+                <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#taskForm">
+                    <i class="bi bi-plus-circle"></i> Новая задача
+                </button>
+            </div>
+            
+            <!-- Форма создания задачи -->
+            <div class="collapse mb-4" id="taskForm">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Добавить задачу</h5>
+                        <form id="createTaskForm">
+                            <div class="mb-3">
+                                <label for="taskTitle" class="form-label">Название</label>
+                                <input type="text" class="form-control" id="taskTitle" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label for="taskDueDate" class="form-label">Срок выполнения</label>
+                                    <input type="date" class="form-control" id="taskDueDate">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="taskPriority" class="form-label">Приоритет</label>
+                                    <select class="form-select" id="taskPriority">
+                                        <option value="low">Низкий</option>
+                                        <option value="medium" selected>Средний</option>
+                                        <option value="high">Высокий</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="taskStatus" class="form-label">Статус</label>
+                                    <select class="form-select" id="taskStatus">
+                                        <option value="in_progress" selected>В процессе</option>
+                                        <option value="completed">Завершено</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="taskTags" class="form-label">Теги (через запятую)</label>
+                                    <input type="text" class="form-control" id="taskTags" placeholder="работа, личное">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDescription" class="form-label">Описание</label>
+                                <textarea class="form-control" id="taskDescription" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Добавить задачу</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Фильтры -->
+            <div class="card mb-4">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex flex-wrap">
+                                <div class="me-3 mb-2">
+                                    <select class="form-select form-select-sm" id="filterStatus">
+                                        <option value="">Все статусы</option>
+                                        <option value="in_progress">В процессе</option>
+                                        <option value="completed">Завершено</option>
+                                        <option value="overdue">Просрочено</option>
+                                    </select>
+                                </div>
+                                <div class="me-3 mb-2">
+                                    <select class="form-select form-select-sm" id="filterPriority">
+                                        <option value="">Все приоритеты</option>
+                                        <option value="high">Высокий</option>
+                                        <option value="medium">Средний</option>
+                                        <option value="low">Низкий</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <select class="form-select form-select-sm" id="filterTags">
+                                        <option value="">Все теги</option>
+                                        <option value="work">Работа</option>
+                                        <option value="personal">Личное</option>
+                                        <option value="urgent">Срочно</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Вид: Список
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item active" href="#">Список</a></li>
+                                    <li><a class="dropdown-item" href="#">Доска (скоро)</a></li>
+                                    <li><a class="dropdown-item" href="#">Календарь (скоро)</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Список задач -->
+            <div id="tasks-container">
+                <!-- Задачи будут добавляться здесь через JavaScript -->
+            </div>
+        </div>
+
+        <!-- Страница входа -->
+        <div id="login-page" class="page-section">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <h3 class="card-title text-center mb-4">Вход в систему</h3>
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="loginUsername" class="form-label">Имя пользователя или email</label>
+                                    <input type="text" class="form-control" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="loginPassword" class="form-label">Пароль</label>
+                                    <input type="password" class="form-control" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">Войти</button>
+                                <div class="text-center">
+                                    <span>Нет аккаунта? <a href="#" onclick="showPage('register')">Зарегистрируйтесь</a></span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница регистрации -->
+        <div id="register-page" class="page-section">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <h3 class="card-title text-center mb-4">Регистрация</h3>
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label for="registerUsername" class="form-label">Имя пользователя</label>
+                                    <input type="text" class="form-control" id="registerUsername" required>
+                                    <div class="form-text">От 4 до 20 символов</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="registerEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerPassword" class="form-label">Пароль</label>
+                                    <input type="password" class="form-control" id="registerPassword" required>
+                                    <div class="form-text">Не менее 6 символов</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">Зарегистрироваться</button>
+                                <div class="text-center">
+                                    <span>Уже есть аккаунт? <a href="#" onclick="showPage('login')">Войдите</a></span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница профиля -->
+        <div id="profile-page" class="page-section">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <h3 class="card-title text-center mb-4">Профиль пользователя</h3>
+                            <form id="profileForm">
+                                <div class="mb-3">
+                                    <label for="profileUsername" class="form-label">Имя пользователя</label>
+                                    <input type="text" class="form-control" id="profileUsername" value="demo_user">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profileEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="profileEmail" value="demo@example.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profilePassword" class="form-label">Новый пароль</label>
+                                    <input type="password" class="form-control" id="profilePassword">
+                                    <div class="form-text">Оставьте пустым, если не хотите менять пароль</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profilePasswordConfirm" class="form-label">Подтверждение пароля</label>
+                                    <input type="password" class="form-control" id="profilePasswordConfirm">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-outline-danger" onclick="logout()">Выйти</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница недельного обзора -->
+        <div id="weekly-page" class="page-section">
+            <h2 class="mb-4">Недельный обзор</h2>
+            
+            <div class="card mb-4">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span class="mx-2">Текущая неделя</span>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <select class="form-select form-select-sm" id="weeklyFilter">
+                                <option value="">Все статусы</option>
+                                <option value="in_progress">В процессе</option>
+                                <option value="completed">Завершено</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="weekly-container">
+                <!-- Недельные задачи будут добавляться здесь через JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования задачи -->
+    <div class="modal fade" id="editTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование задачи</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTaskForm">
+                        <input type="hidden" id="editTaskId">
+                        <div class="mb-3">
+                            <label for="editTaskTitle" class="form-label">Название</label>
+                            <input type="text" class="form-control" id="editTaskTitle" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
+                                <input type="date" class="form-control" id="editTaskDueDate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTaskPriority" class="form-label">Приоритет</label>
+                                <select class="form-select" id="editTaskPriority">
+                                    <option value="low">Низкий</option>
+                                    <option value="medium">Средний</option>
+                                    <option value="high">Высокий</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTaskStatus" class="form-label">Статус</label>
+                                <select class="form-select" id="editTaskStatus">
+                                    <option value="in_progress">В процессе</option>
+                                    <option value="completed">Завершено</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTaskTags" class="form-label">Теги (через запятую)</label>
+                                <input type="text" class="form-control" id="editTaskTags">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTaskDescription" class="form-label">Описание</label>
+                            <textarea class="form-control" id="editTaskDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Демо-данные
+        const demoTasks = [
+            {
+                id: 1,
+                title: "Завершить проект по веб-разработке",
+                due_date: "2023-09-20",
+                priority: "high",
+                status: "in_progress",
+                tags: ["работа", "срочно"],
+                description: "Нужно закончить таск-менеджер и подготовить презентацию"
+            },
+            {
+                id: 2,
+                title: "Купить продукты",
+                due_date: "2023-09-15",
+                priority: "medium",
+                status: "in_progress",
+                tags: ["личное", "покупки"],
+                description: "Молоко, хлеб, яйца, фрукты"
+            },
+            {
+                id: 3,
+                title: "Подготовиться к совещанию",
+                due_date: "2023-09-14",
+                priority: "high",
+                status: "completed",
+                tags: ["работа"],
+                description: "Подготовить отчет и презентационные материалы"
+            },
+            {
+                id: 4,
+                title: "Заняться спортом",
+                due_date: "2023-09-16",
+                priority: "low",
+                status: "in_progress",
+                tags: ["личное", "здоровье"],
+                description: "30 минут кардио и силовая тренировка"
+            }
+        ];
+
+        // Текущие задачи (из localStorage или демо)
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || demoTasks;
+
+        // Показать определенную страницу
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(`${pageId}-page`).classList.add('active');
+        }
+
+        // Отображение задач
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            
+            // Применяем фильтры
+            const statusFilter = document.getElementById('filterStatus').value;
+            const priorityFilter = document.getElementById('filterPriority').value;
+            const tagsFilter = document.getElementById('filterTags').value;
+            
+            const filteredTasks = tasks.filter(task => {
+                return (!statusFilter || task.status === statusFilter) &&
+                       (!priorityFilter || task.priority === priorityFilter) &&
+                       (!tagsFilter || task.tags.includes(tagsFilter));
+            });
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Задачи не найдены</p>
+                        <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredTasks.forEach(task => {
+                const priorityClass = task.priority === 'high' ? 'priority-high' : 
+                                    task.priority === 'medium' ? 'priority-medium' : 'priority-low';
+                
+                const statusText = task.status === 'in_progress' ? 'В процессе' : 
+                                 task.status === 'completed' ? 'Завершено' : 'Просрочено';
+                
+                const statusClass = task.status === 'in_progress' ? 'bg-primary' : 
+                                  task.status === 'completed' ? 'bg-success' : 'bg-danger';
+                
+                const isCompleted = task.status === 'completed';
+                
+                const taskElement = document.createElement('div');
+                taskElement.className = `card mb-3 task-card ${priorityClass} ${isCompleted ? 'task-completed' : ''}`;
+                taskElement.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title task-title mb-1">${task.title}</h5>
+                                ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
+                                <div class="d-flex flex-wrap align-items-center mt-2">
+                                    ${task.due_date ? `<span class="badge bg-light text-dark me-2 mb-1"><i class="bi bi-calendar me-1"></i>${formatDate(task.due_date)}</span>` : ''}
+                                    <span class="badge ${statusClass} status-badge me-2 mb-1">${statusText}</span>
+                                    ${task.tags.map(tag => `<span class="badge tag-badge me-2 mb-1">${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="markAsCompleted(${task.id})">Отметить как выполненное</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="openEditModal(${task.id})">Редактировать</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask(${task.id})">Удалить</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(taskElement);
+            });
+            
+            // Сохраняем задачи в localStorage
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Форматирование даты
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'short' };
+            return new Date(dateString).toLocaleDateString('ru-RU', options);
+        }
+
+        // Добавление новой задачи
+        document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('taskTitle').value,
+                due_date: document.getElementById('taskDueDate').value || null,
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value,
+                tags: document.getElementById('taskTags').value ? 
+                      document.getElementById('taskTags').value.split(',').map(tag => tag.trim()) : [],
+                description: document.getElementById('taskDescription').value
+            };
+            
+            tasks.push(newTask);
+            renderTasks();
+            
+            // Сброс формы
+            this.reset();
+            document.getElementById('taskPriority').value = 'medium';
+            document.getElementById('taskStatus').value = 'in_progress';
+            
+            // Скрытие формы
+            const collapseElement = bootstrap.Collapse.getInstance(document.getElementById('taskForm'));
+            collapseElement.hide();
+            
+            // Уведомление
+            alert('Задача успешно добавлена!');
+        });
+
+        // Открытие модального окна редактирования
+        function openEditModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            document.getElementById('editTaskId').value = task.id;
+            document.getElementById('editTaskTitle').value = task.title;
+            document.getElementById('editTaskDueDate').value = task.due_date || '';
+            document.getElementById('editTaskPriority').value = task.priority;
+            document.getElementById('editTaskStatus').value = task.status;
+            document.getElementById('editTaskTags').value = task.tags.join(', ');
+            document.getElementById('editTaskDescription').value = task.description || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+            modal.show();
+        }
+
+        // Сохранение изменений задачи
+        function saveTaskChanges() {
+            const taskId = parseInt(document.getElementById('editTaskId').value);
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            
+            if (taskIndex === -1) return;
+            
+            tasks[taskIndex] = {
+                ...tasks[taskIndex],
+                title: document.getElementById('editTaskTitle').value,
+                due_date: document.getElementById('editTaskDueDate').value || null,
+                priority: document.getElementById('editTaskPriority').value,
+                status: document.getElementById('editTaskStatus').value,
+                tags: document.getElementById('editTaskTags').value ? 
+                      document.getElementById('editTaskTags').value.split(',').map(tag => tag.trim()) : [],
+                description: document.getElementById('editTaskDescription').value
+            };
+            
+            renderTasks();
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editTaskModal'));
+            modal.hide();
+            
+            alert('Изменения сохранены!');
+        }
+
+        // Отметить задачу как выполненную
+        function markAsCompleted(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            tasks[taskIndex].status = 'completed';
+            renderTasks();
+        }
+
+        // Удаление задачи
+        function deleteTask(taskId) {
+            if (!confirm('Вы уверены, что хотите удалить эту задачу?')) return;
+            
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+        }
+
+        // Выход из системы
+        function logout() {
+            showPage('home');
+            alert('Вы вышли из системы');
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTasks();
+            
+            // Обработчики форм входа и регистрации
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                showPage('home');
+                alert('Добро пожаловать! (Это демо-версия, вход не реализован)');
+            });
+            
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                showPage('home');
+                alert('Регистрация успешна! (Это демо-версия, регистрация не реализована)');
+            });
+            
+            document.getElementById('profileForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Профиль обновлен! (Это демо-версия, изменения не сохраняются)');
+            });
+            
+            // Обработчики фильтров
+            document.getElementById('filterStatus').addEventListener('change', renderTasks);
+            document.getElementById('filterPriority').addEventListener('change', renderTasks);
+            document.getElementById('filterTags').addEventListener('change', renderTasks);
+        });
+    </script>
+</body>
+</html>
