@@ -1,0 +1,36 @@
+<% layout('base') -%>
+<div id="profile-page">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <h3 class="card-title text-center mb-4">Профиль пользователя</h3>
+                    <form method="POST" action="/profile">
+                        <div class="mb-3">
+                            <label for="profileUsername" class="form-label">Имя пользователя</label>
+                            <input type="text" class="form-control" id="profileUsername" name="username" value="<%= user.username %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="profileEmail" name="email" value="<%= user.email %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profilePassword" class="form-label">Новый пароль</label>
+                            <input type="password" class="form-control" id="profilePassword" name="password">
+                            <div class="form-text">Оставьте пустым, если не хотите менять пароль</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
+                        <div class="text-center">
+                            <form method="POST" action="/logout">
+                                <button type="submit" class="btn btn-outline-danger">Выйти</button>
+                            </form>
+                        </div>
+                    </form>
+                    <% errors.forEach(error => { %>
+                        <div class="alert alert-danger mt-3"><%= error.msg %></div>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,73 @@
+:root {
+    --primary: #6c5ce7;
+    --secondary: #a29bfe;
+    --light-bg: #f8f9fa;
+    --dark-text: #2d3436;
+}
+
+body {
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.task-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid var(--secondary);
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.priority-high {
+    border-left-color: #e84118;
+}
+
+.priority-medium {
+    border-left-color: #fbc531;
+}
+
+.priority-low {
+    border-left-color: #4cd137;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.tag-badge {
+    background-color: #dfe6e9;
+    color: #636e72;
+    font-weight: normal;
+}
+
+.welcome-container {
+    max-width: 600px;
+}
+
+.task-completed {
+    background-color: #f1f2f6;
+}
+
+.task-completed .task-title {
+    text-decoration: line-through;
+    color: #7f8c8d;
+}
