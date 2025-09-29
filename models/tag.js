@@ -1,7 +1,5 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
-  const Tag = sequelize.define('Tag', {
+module.exports = (sequelize, DataTypes) => {
+  return sequelize.define('tag', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -29,6 +27,4 @@ module.exports = (sequelize) => {
       }
     ]
   });
-
-  return Tag;
 };
