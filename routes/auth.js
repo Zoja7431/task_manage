@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const dns = require('dns').promises;
-const { User } = require('../models')(require('sequelize').Sequelize);
+const { User } = require('../models')(require('../index').sequelize);
 const router = express.Router();
 
 function isAuthenticated(req, res, next) {

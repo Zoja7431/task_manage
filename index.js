@@ -6,11 +6,20 @@ const winston = require('winston');
 const { Sequelize } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
-const homeRoutes = require('./routes/home');
-const authRoutes = require('./routes/auth');
-const weeklyRoutes = require('./routes/weekly');
 
-const app = express();
+// Настройка Sequelize
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: './db.sqlite',
+  logging: false
+});
+
+// Подключение моделей
+const models = require('./models')(sequelize);
+console.log('Models loaded:', Object.keys(models)); // Отладочный вывод
+
+// Экспорт sequelize и моделей для маршрутов
+module.exports = { sequelize, models };
 
 // Логирование с Winston
 const logger = winston.createLogger({
@@ -27,17 +36,8 @@ const logger = winston.createLogger({
 
 // Логирование запросов с morgan
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.log'), { flags: 'a' });
+const app = express();
 app.use(morgan('combined', { stream: accessLogStream }));
-
-// Настройка Sequelize
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: './db.sqlite',
-  logging: false
-});
-
-// Подключение моделей
-require('./models')(sequelize);
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -61,22 +61,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Обработка ошибок
-app.use((err, req, res, next) => {
-  logger.error(`Error: ${err.message}, Stack: ${err.stack}`);
-  res.status(500).render('error', { error: 'Внутренняя ошибка сервера' });
-});
-
 // Маршруты
+const homeRoutes = require('./routes/home');
+const authRoutes = require('./routes/auth');
+const weeklyRoutes = require('./routes/weekly');
 app.use('/', homeRoutes);
 app.use('/', authRoutes);
 app.use('/', weeklyRoutes);
 
+// Обработка ошибок
+app.use((err, req, res, next) => {
+  logger.error(`Error: ${err.message}, Stack: ${err.stack}`);
+  console.error('Error details:', { message: err.message, stack: err.stack }); // Отладочный вывод
+  res.status(500).render('error', { 
+    error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+  });
+});
+
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
-sequelize.sync({ force: true }).then(() => { // Убери force: true после первого запуска
+sequelize.sync({ force: false }).then(() => {
   app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
     console.log(`Server running on port ${PORT}`);
   });
+}).catch(err => {
+  logger.error(`Sequelize sync error: ${err.message}, Stack: ${err.stack}`);
+  console.error('Sequelize sync error:', err);
 });

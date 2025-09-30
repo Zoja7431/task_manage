@@ -1,7 +1,8 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { User, Task, Tag } = require('../models')(require('sequelize').Sequelize);
 const router = express.Router();
+const { sequelize, models } = require('../index');
+const { User, Task, Tag } = models;
 
 function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
@@ -10,45 +11,45 @@ function isAuthenticated(req, res, next) {
 
 // Home
 router.get('/', async (req, res) => {
-  if (!req.session.user) {
-    return res.render('home', { tasks: [], tags: [] });
-  }
-
   const statusFilter = req.query.status || '';
   const priorityFilter = req.query.priority || '';
   const tagFilter = req.query.tags ? (Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags]) : [];
 
-  const where = { user_id: req.session.user.id };
-  if (statusFilter) where.status = statusFilter;
-  if (priorityFilter) where.priority = priorityFilter;
+  let tasks = [];
+  let tags = [];
 
-  const tasks = await Task.findAll({
-    where,
-    include: [{ model: Tag, through: { attributes: [] } }],
-    order: [['created_at', 'DESC']]
-  });
+  if (req.session.user) {
+    const where = { user_id: req.session.user.id };
+    if (statusFilter) where.status = statusFilter;
+    if (priorityFilter) where.priority = priorityFilter;
 
-  // Фильтрация по тегам
-  let filteredTasks = tasks;
-  if (tagFilter.length) {
-    filteredTasks = tasks.filter(task => 
-      task.Tags.some(tag => tagFilter.includes(tag.name))
-    );
-  }
+    tasks = await Task.findAll({
+      where,
+      include: [{ model: Tag, through: { attributes: [] } }],
+      order: [['created_at', 'DESC']]
+    });
 
-  // Обновление overdue
-  const today = new Date().toISOString().split('T')[0];
-  for (const task of tasks) {
-    if (task.due_date && task.due_date < today && task.status !== 'completed') {
-      task.status = 'overdue';
-      await task.save();
+    // Фильтрация по тегам
+    if (tagFilter.length) {
+      tasks = tasks.filter(task => 
+        task.Tags.some(tag => tagFilter.includes(tag.name))
+      );
     }
-  }
 
-  const tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
+    // Обновление overdue
+    const today = new Date().toISOString().split('T')[0];
+    for (const task of tasks) {
+      if (task.due_date && task.due_date < today && task.status !== 'completed') {
+        task.status = 'overdue';
+        await task.save();
+      }
+    }
+
+    tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
+  }
 
   res.render('home', {
-    tasks: filteredTasks,
+    tasks,
     tags,
     statusFilter,
     priorityFilter,

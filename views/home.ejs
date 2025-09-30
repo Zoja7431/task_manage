@@ -1,198 +1,199 @@
-<% layout('base') -%>
-<div id="home-page">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<% console.log('Rendering home.ejs with:', { 
+  user: typeof user !== 'undefined' ? user : null, 
+  tasks: typeof tasks !== 'undefined' ? tasks : [], 
+  tags: typeof tags !== 'undefined' ? tags : [], 
+  statusFilter: typeof statusFilter !== 'undefined' ? statusFilter : '', 
+  priorityFilter: typeof priorityFilter !== 'undefined' ? priorityFilter : '', 
+  tagFilter: typeof tagFilter !== 'undefined' ? tagFilter : [] 
+}); %>
+<%- include('base', { 
+  body: `
+    <div id="home-page" class="container my-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Мои задачи</h2>
         <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#taskForm">
-            <i class="bi bi-plus-circle"></i> Новая задача
+          <i class="bi bi-plus-circle"></i> Новая задача
         </button>
-    </div>
+      </div>
 
-    <!-- Форма создания задачи -->
-    <div class="collapse mb-4" id="taskForm">
+      <!-- Форма создания задачи -->
+      <div class="collapse mb-4" id="taskForm">
         <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Добавить задачу</h5>
-                <form method="POST" action="/tasks">
-                    <div class="mb-3">
-                        <label for="taskTitle" class="form-label">Название</label>
-                        <input type="text" class="form-control" id="taskTitle" name="title" required>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="taskDueDate" class="form-label">Срок выполнения</label>
-                            <input type="date" class="form-control" id="taskDueDate" name="due_date">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="taskPriority" class="form-label">Приоритет</label>
-                            <select class="form-select" id="taskPriority" name="priority">
-                                <option value="low">Низкий</option>
-                                <option value="medium" selected>Средний</option>
-                                <option value="high">Высокий</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="taskStatus" class="form-label">Статус</label>
-                            <select class="form-select" id="taskStatus" name="status">
-                                <option value="in_progress" selected>В процессе</option>
-                                <option value="completed">Завершено</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="taskTags" class="form-label">Теги (через запятую)</label>
-                            <input type="text" class="form-control" id="taskTags" name="tags" placeholder="работа, личное">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="taskDescription" class="form-label">Описание</label>
-                        <textarea class="form-control" id="taskDescription" name="description" rows="2"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Добавить задачу</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Фильтры -->
-    <div class="card mb-4">
-        <div class="card-body py-2">
-            <form method="GET" action="/">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-flex flex-wrap">
-                            <div class="me-3 mb-2">
-                                <select class="form-select form-select-sm" id="filterStatus" name="status">
-                                    <option value="">Все статусы</option>
-                                    <option value="in_progress" <%= statusFilter === 'in_progress' ? 'selected' : '' %>>В процессе</option>
-                                    <option value="completed" <%= statusFilter === 'completed' ? 'selected' : '' %>>Завершено</option>
-                                    <option value="overdue" <%= statusFilter === 'overdue' ? 'selected' : '' %>>Просрочено</option>
-                                </select>
-                            </div>
-                            <div class="me-3 mb-2">
-                                <select class="form-select form-select-sm" id="filterPriority" name="priority">
-                                    <option value="">Все приоритеты</option>
-                                    <option value="high" <%= priorityFilter === 'high' ? 'selected' : '' %>>Высокий</option>
-                                    <option value="medium" <%= priorityFilter === 'medium' ? 'selected' : '' %>>Средний</option>
-                                    <option value="low" <%= priorityFilter === 'low' ? 'selected' : '' %>>Низкий</option>
-                                </select>
-                            </div>
-                            <div class="mb-2">
-                                <select class="form-select form-select-sm" id="filterTags" name="tags" multiple>
-                                    <% tags.forEach(tag => { %>
-                                        <option value="<%= tag.name %>" <%= tagFilter.includes(tag.name) ? 'selected' : '' %>><%= tag.name %></option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button type="submit" class="btn btn-sm btn-primary">Применить</button>
-                    </div>
+          <div class="card-body">
+            <h5 class="card-title">Добавить задачу</h5>
+            <form method="POST" action="/tasks">
+              <div class="mb-3">
+                <label for="taskTitle" class="form-label">Название</label>
+                <input type="text" class="form-control" id="taskTitle" name="title" required>
+              </div>
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label for="taskDueDate" class="form-label">Срок выполнения</label>
+                  <input type="date" class="form-control" id="taskDueDate" name="due_date">
                 </div>
+                <div class="col-md-3 mb-3">
+                  <label for="taskPriority" class="form-label">Приоритет</label>
+                  <select class="form-select" id="taskPriority" name="priority">
+                    <option value="low">Низкий</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="high">Высокий</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="taskStatus" class="form-label">Статус</label>
+                  <select class="form-select" id="taskStatus" name="status">
+                    <option value="in_progress" selected>В процессе</option>
+                    <option value="completed">Завершено</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="taskTags" class="form-label">Теги (через запятую)</label>
+                  <input type="text" class="form-control" id="taskTags" name="tags" placeholder="работа, личное">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="taskDescription" class="form-label">Описание</label>
+                <textarea class="form-control" id="taskDescription" name="description" rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Добавить задачу</button>
             </form>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- Список задач -->
-    <div id="tasks-container">
-        <% if (tasks.length === 0) { %>
-            <div class="text-center py-5">
-                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                <p class="mt-3">Задачи не найдены</p>
-                <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
-            </div>
-        <% } else { %>
-            <% tasks.forEach(task => { %>
-                <div class="card mb-3 task-card <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %> <%= task.status === 'completed' ? 'task-completed' : '' %>">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h5 class="card-title task-title mb-1"><%= task.title %></h5>
-                                <% if (task.description) { %>
-                                    <p class="card-text text-muted small"><%= task.description %></p>
-                                <% } %>
-                                <div class="d-flex flex-wrap align-items-center mt-2">
-                                    <% if (task.due_date) { %>
-                                        <span class="badge bg-light text-dark me-2 mb-1"><i class="bi bi-calendar me-1"></i><%= new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) %></span>
-                                    <% } %>
-                                    <span class="badge <%= task.status === 'in_progress' ? 'bg-primary' : task.status === 'completed' ? 'bg-success' : 'bg-danger' %> status-badge me-2 mb-1">
-                                        <%= task.status === 'in_progress' ? 'В процессе' : task.status === 'completed' ? 'Завершено' : 'Просрочено' %>
-                                    </span>
-                                    <% task.Tags.forEach(tag => { %>
-                                        <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
-                                    <% }); %>
-                                </div>
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><form action="/tasks/<%= task.id %>/complete" method="POST"><button class="dropdown-item" type="submit">Отметить как выполненное</button></form></li>
-                                    <li><a class="dropdown-item" href="#" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><form action="/tasks/<%= task.id %>/delete" method="POST"><button class="dropdown-item text-danger" type="submit">Удалить</button></form></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+      <!-- Фильтры -->
+      <div class="card mb-4">
+        <div class="card-body py-2">
+          <form method="GET" action="/">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="d-flex flex-wrap">
+                  <div class="me-3 mb-2">
+                    <select class="form-select form-select-sm" id="filterStatus" name="status">
+                      <option value="">Все статусы</option>
+                      <option value="in_progress" ${typeof statusFilter !== 'undefined' && statusFilter === 'in_progress' ? 'selected' : ''}>В процессе</option>
+                      <option value="completed" ${typeof statusFilter !== 'undefined' && statusFilter === 'completed' ? 'selected' : ''}>Завершено</option>
+                      <option value="overdue" ${typeof statusFilter !== 'undefined' && statusFilter === 'overdue' ? 'selected' : ''}>Просрочено</option>
+                    </select>
+                  </div>
+                  <div class="me-3 mb-2">
+                    <select class="form-select form-select-sm" id="filterPriority" name="priority">
+                      <option value="">Все приоритеты</option>
+                      <option value="high" ${typeof priorityFilter !== 'undefined' && priorityFilter === 'high' ? 'selected' : ''}>Высокий</option>
+                      <option value="medium" ${typeof priorityFilter !== 'undefined' && priorityFilter === 'medium' ? 'selected' : ''}>Средний</option>
+                      <option value="low" ${typeof priorityFilter !== 'undefined' && priorityFilter === 'low' ? 'selected' : ''}>Низкий</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <select class="form-select form-select-sm" id="filterTags" name="tags" multiple>
+                      ${(typeof tags !== 'undefined' ? tags : []).map(tag => `<option value="${tag.name}" ${(typeof tagFilter !== 'undefined' && tagFilter.includes(tag.name)) ? 'selected' : ''}>${tag.name}</option>`).join('')}
+                    </select>
+                  </div>
                 </div>
-            <% }); %>
-        <% } %>
-    </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <button type="submit" class="btn btn-sm btn-primary">Применить</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
 
-    <!-- Модальное окно редактирования -->
-    <div class="modal fade" id="editTaskModal" tabindex="-1">
+      <!-- Список задач -->
+      <div id="tasks-container">
+        ${(typeof tasks !== 'undefined' && tasks.length === 0) ? `
+          <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-3">Задачи не найдены</p>
+            <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+          </div>
+        ` : (typeof tasks !== 'undefined' ? tasks : []).map(task => `
+          <div class="card mb-3 task-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <h5 class="card-title task-title mb-1">${task.title}</h5>
+                  ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
+                  <div class="d-flex flex-wrap align-items-center mt-2">
+                    ${task.due_date ? `<span class="badge bg-light text-dark me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>` : ''}
+                    <span class="badge ${task.status === 'in_progress' ? 'bg-primary' : task.status === 'completed' ? 'bg-success' : 'bg-danger'} status-badge me-2 mb-1">
+                      ${task.status === 'in_progress' ? 'В процессе' : task.status === 'completed' ? 'Завершено' : 'Просрочено'}
+                    </span>
+                    ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
+                  </div>
+                </div>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><form action="/tasks/${task.id}/complete" method="POST"><button class="dropdown-item" type="submit">Отметить как выполненное</button></form></li>
+                    <li><a class="dropdown-item" href="#" onclick="openEditModal('${task.id}')">Редактировать</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><form action="/tasks/${task.id}/delete" method="POST"><button class="dropdown-item text-danger" type="submit">Удалить</button></form></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Модальное окно редактирования -->
+      <div class="modal fade" id="editTaskModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Редактирование задачи</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editTaskForm">
-                        <input type="hidden" id="editTaskId">
-                        <div class="mb-3">
-                            <label for="editTaskTitle" class="form-label">Название</label>
-                            <input type="text" class="form-control" id="editTaskTitle" name="title" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
-                                <input type="date" class="form-control" id="editTaskDueDate" name="due_date">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="editTaskPriority" class="form-label">Приоритет</label>
-                                <select class="form-select" id="editTaskPriority" name="priority">
-                                    <option value="low">Низкий</option>
-                                    <option value="medium">Средний</option>
-                                    <option value="high">Высокий</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="editTaskStatus" class="form-label">Статус</label>
-                                <select class="form-select" id="editTaskStatus" name="status">
-                                    <option value="in_progress">В процессе</option>
-                                    <option value="completed">Завершено</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="editTaskTags" class="form-label">Теги (через запятую)</label>
-                                <input type="text" class="form-control" id="editTaskTags" name="tags">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editTaskDescription" class="form-label">Описание</label>
-                            <textarea class="form-control" id="editTaskDescription" name="description" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
-                </div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Редактирование задачи</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <div class="modal-body">
+              <form id="editTaskForm">
+                <input type="hidden" id="editTaskId">
+                <div class="mb-3">
+                  <label for="editTaskTitle" class="form-label">Название</label>
+                  <input type="text" class="form-control" id="editTaskTitle" name="title" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
+                    <input type="date" class="form-control" id="editTaskDueDate" name="due_date">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="editTaskPriority" class="form-label">Приоритет</label>
+                    <select class="form-select" id="editTaskPriority" name="priority">
+                      <option value="low">Низкий</option>
+                      <option value="medium">Средний</option>
+                      <option value="high">Высокий</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="editTaskStatus" class="form-label">Статус</label>
+                    <select class="form-select" id="editTaskStatus" name="status">
+                      <option value="in_progress">В процессе</option>
+                      <option value="completed">Завершено</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="editTaskTags" class="form-label">Теги (через запятую)</label>
+                    <input type="text" class="form-control" id="editTaskTags" name="tags">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="editTaskDescription" class="form-label">Описание</label>
+                  <textarea class="form-control" id="editTaskDescription" name="description" rows="3"></textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  `
+}) %>

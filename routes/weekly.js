@@ -1,7 +1,8 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Task } = require('../models')(require('sequelize').Sequelize);
 const router = express.Router();
+const { sequelize, models } = require('../index');
+const { Task, Tag } = models;
 
 function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
@@ -18,7 +19,7 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
       user_id: req.session.user.id,
       due_date: { [Op.between]: [today.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
     },
-    include: [{ model: require('../models').Tag, through: { attributes: [] } }],
+    include: [{ model: Tag, through: { attributes: [] } }],
     order: [['due_date', 'ASC']]
   });
 
