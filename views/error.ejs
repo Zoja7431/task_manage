@@ -1,17 +1,16 @@
-<% console.log('Rendering error.ejs with:', { error: typeof error !== 'undefined' ? error : null, stack: typeof stack !== 'undefined' ? stack : null }); %>
 <%- include('base', { 
   body: `
     <div class="container my-4">
       <div class="alert alert-danger" role="alert">
-        <h4 class="alert-heading">Ошибка сервера</h4>
-        <p>${typeof error !== 'undefined' ? error : 'Внутренняя ошибка сервера'}</p>
+        <h4 class="alert-heading">Ошибка: ${error || 'Внутренняя ошибка сервера'}</h4>
         <hr>
-        ${typeof stack !== 'undefined' && stack ? `
-          <pre style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 0.9em; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+        ${stack ? `
+          <pre style="background-color: #3a3a3a; padding: 15px; border-radius: 5px; font-size: 0.9em; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
             ${stack}
           </pre>
         ` : ''}
-        <a href="/" class="btn btn-primary mt-3">Вернуться на главную</a>
+        <a href="/log" class="btn btn-primary mt-3">Просмотреть лог</a>
+        <a href="/" class="btn btn-secondary mt-3">Вернуться на главную</a>
       </div>
     </div>
   `

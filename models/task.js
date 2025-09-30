@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     status: {
       type: DataTypes.STRING(20),
-      defaultValue: 'in_progress'
+      defaultValue: 'in_progress' // По умолчанию 'in_progress'
     },
     priority: {
       type: DataTypes.STRING(20),

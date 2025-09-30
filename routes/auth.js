@@ -1,23 +1,17 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
-const dns = require('dns').promises;
-const { User } = require('../models')(require('../index').sequelize);
+const { sequelize, models } = require('../index');
+const { User } = models;
 const router = express.Router();
 
-function isAuthenticated(req, res, next) {
-  if (req.session.user) return next();
-  res.redirect('/login');
-}
-
-// Register
+// Регистрация
 router.get('/register', (req, res) => {
   res.render('register', { errors: [] });
 });
 
 router.post('/register', [
-  body('username').isLength({ min: 4, max: 20 }).withMessage('Имя пользователя должно быть от 4 до 20 символов'),
-  body('email').isEmail().withMessage('Введите корректный email'),
+  body('username').notEmpty().withMessage('Имя пользователя обязательно'),
+  body('email').isEmail().withMessage('Некорректный email'),
   body('password').isLength({ min: 6 }).withMessage('Пароль должен быть не менее 6 символов')
 ], async (req, res) => {
   const errors = validationResult(req);
@@ -27,102 +21,65 @@ router.post('/register', [
 
   const { username, email, password } = req.body;
 
-  // Проверка домена email
   try {
-    const domain = email.split('@')[1];
-    await dns.resolve(domain);
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      req.session.flash = [{ type: 'danger', message: 'Email уже занят' }];
+      return res.redirect('/register');
+    }
+
+    await User.create({ username, email, password, avatar: '#528bff' });
+    req.session.flash = [{ type: 'success', message: 'Регистрация успешна! Пожалуйста, войдите.' }];
+    res.redirect('/welcome');
   } catch (err) {
-    return res.render('register', { errors: [{ msg: 'Недействительный домен email' }] });
+    console.error('Registration error:', err);
+    req.session.flash = [{ type: 'danger', message: 'Ошибка при регистрации' }];
+    res.redirect('/register');
   }
-
-  // Проверка уникальности
-  const existingUser = await User.findOne({ where: { [Op.or]: [{ username }, { email }] } });
-  if (existingUser) {
-    return res.render('register', { errors: [{ msg: 'Имя пользователя или email уже заняты' }] });
-  }
-
-  const password_hash = await bcrypt.hash(password, 10);
-  await User.create({ username, email, password_hash });
-  req.session.flash = [{ type: 'success', message: 'Регистрация успешна! Пожалуйста, войдите' }];
-  res.redirect('/login');
 });
 
-// Login
-router.get('/login', (req, res) => {
-  res.render('login', { errors: [] });
+// Вход
+router.get('/welcome', (req, res) => {
+  res.render('welcome', { errors: [] });
 });
 
-router.post('/login', [
-  body('username').notEmpty().withMessage('Введите имя пользователя или email'),
-  body('password').notEmpty().withMessage('Введите пароль')
+router.post('/welcome', [
+  body('email').isEmail().withMessage('Некорректный email'),
+  body('password').notEmpty().withMessage('Пароль обязателен')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('login', { errors: errors.array() });
+    return res.render('welcome', { errors: errors.array() });
   }
 
-  const { username, password } = req.body;
-  const user = await User.findOne({ where: { [Op.or]: [{ username }, { email: username }] } });
-  if (!user) {
-    return res.render('login', { errors: [{ msg: 'Аккаунт не найден. <a href="/register">Зарегистрироваться?</a>' }] });
-  }
+  const { email, password } = req.body;
 
-  const isMatch = await bcrypt.compare(password, user.password_hash);
-  if (!isMatch) {
-    return res.render('login', { errors: [{ msg: 'Неверный пароль' }] });
-  }
-
-  req.session.user = { id: user.id, username: user.username, email: user.email };
-  res.redirect('/');
-});
-
-// Profile
-router.get('/profile', isAuthenticated, (req, res) => {
-  res.render('profile', { user: req.session.user, errors: [] });
-});
-
-router.post('/profile', isAuthenticated, [
-  body('username').isLength({ min: 4, max: 20 }).withMessage('Имя пользователя должно быть от 4 до 20 символов'),
-  body('email').isEmail().withMessage('Введите корректный email'),
-  body('password').optional().isLength({ min: 6 }).withMessage('Пароль должен быть не менее 6 символов')
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.render('profile', { user: req.session.user, errors: errors.array() });
-  }
-
-  const { username, email, password } = req.body;
   try {
-    const domain = email.split('@')[1];
-    await dns.resolve(domain);
-  } catch (err) {
-    return res.render('profile', { user: req.session.user, errors: [{ msg: 'Недействительный домен email' }] });
-  }
+    const user = await User.findOne({ where: { email } });
+    if (!user || user.password !== password) {
+      req.session.flash = [{ type: 'danger', message: 'Неверный email или пароль' }];
+      return res.redirect('/welcome');
+    }
 
-  const existingUser = await User.findOne({
-    where: { [Op.or]: [{ username }, { email }], id: { [Op.ne]: req.session.user.id } }
-  });
-  if (existingUser) {
-    return res.render('profile', { user: req.session.user, errors: [{ msg: 'Имя пользователя или email уже заняты' }] });
-  }
-
-  const user = await User.findByPk(req.session.user.id);
-  user.username = username;
-  user.email = email;
-  if (password) {
-    user.password_hash = await bcrypt.hash(password, 10);
-  }
-  await user.save();
-
-  req.session.user = { id: user.id, username: user.username, email: user.email };
-  req.session.flash = [{ type: 'success', message: 'Профиль обновлен!' }];
-  res.redirect('/profile');
-});
-
-// Logout
-router.post('/logout', isAuthenticated, (req, res) => {
-  req.session.destroy(() => {
+    req.session.user = { id: user.id, username: user.username, email: user.email, avatar: user.avatar || '#528bff' };
+    req.session.flash = [{ type: 'success', message: 'Добро пожаловать!' }];
     res.redirect('/');
+  } catch (err) {
+    console.error('Login error:', err);
+    req.session.flash = [{ type: 'danger', message: 'Ошибка при входе' }];
+    res.redirect('/welcome');
+  }
+});
+
+// Выход
+router.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+      req.session.flash = [{ type: 'danger', message: 'Ошибка при выходе' }];
+      return res.redirect('/');
+    }
+    res.redirect('/welcome');
   });
 });
 

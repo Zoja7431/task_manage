@@ -1,36 +1,50 @@
-<% layout('base') -%>
-<div id="profile-page">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-5">
-                    <h3 class="card-title text-center mb-4">Профиль пользователя</h3>
-                    <form method="POST" action="/profile">
-                        <div class="mb-3">
-                            <label for="profileUsername" class="form-label">Имя пользователя</label>
-                            <input type="text" class="form-control" id="profileUsername" name="username" value="<%= user.username %>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="profileEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="profileEmail" name="email" value="<%= user.email %>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="profilePassword" class="form-label">Новый пароль</label>
-                            <input type="password" class="form-control" id="profilePassword" name="password">
-                            <div class="form-text">Оставьте пустым, если не хотите менять пароль</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
-                        <div class="text-center">
-                            <form method="POST" action="/logout">
-                                <button type="submit" class="btn btn-outline-danger">Выйти</button>
-                            </form>
-                        </div>
-                    </form>
-                    <% errors.forEach(error => { %>
-                        <div class="alert alert-danger mt-3"><%= error.msg %></div>
-                    <% }); %>
-                </div>
+<% console.log('Rendering profile.ejs with:', { user: user, errors: errors }); %>
+<%- include('base', { 
+  body: `
+    <div id="profile-page" class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body p-5">
+            <h3 class="card-title text-center mb-4">Профиль пользователя</h3>
+            <div class="text-center mb-4">
+              <span class="avatar large-avatar">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="40" fill="${user.avatar || '#528bff'}" />
+                  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="32" font-family="Arial">
+                    ${user && user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  </text>
+                </svg>
+              </span>
             </div>
+            <form method="POST" action="/profile">
+              <div class="mb-3">
+                <label for="profileUsername" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" id="profileUsername" name="username" value="${user && user.username ? user.username : ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="profileEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="profileEmail" name="email" value="${user && user.email ? user.email : ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="profilePassword" class="form-label">Новый пароль</label>
+                <input type="password" class="form-control" id="profilePassword" name="password">
+                <div class="form-text">Оставьте пустым, если не хотите менять пароль</div>
+              </div>
+              <div class="mb-3">
+                <label for="profileAvatarColor" class="form-label">Цвет аватарки</label>
+                <input type="color" class="form-control form-control-color" id="profileAvatarColor" name="avatar" value="${user && user.avatar ? user.avatar : '#528bff'}">
+              </div>
+              <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
+              <div class="text-center">
+                <form method="POST" action="/logout">
+                  <button type="submit" class="btn btn-outline-danger">Выйти</button>
+                </form>
+              </div>
+            </form>
+            ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  `
+}) %>
