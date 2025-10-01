@@ -7,10 +7,10 @@
           <div class="card-body p-5">
             <h3 class="card-title text-center mb-4">Профиль пользователя</h3>
             <div class="text-center mb-4">
-              <span class="avatar large-avatar">
-                <svg width="80" height="80" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="40" fill="${user.avatar || '#528bff'}" />
-                  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="32" font-family="Arial">
+              <span class="avatar large-avatar mx-auto d-block mb-3">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="60" fill="${user.avatar || '#528bff'}" />
+                  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="60" font-family="Arial">
                     ${user && user.username ? user.username.charAt(0).toUpperCase() : 'U'}
                   </text>
                 </svg>

@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="/">TaskFlow</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
@@ -26,10 +26,17 @@
                 </ul>
                 <div class="d-flex">
                     <% if (user) { %>
-                        <a href="/profile" class="btn btn-outline-secondary me-2">Профиль</a>
-                        <form method="POST" action="/logout" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger">Выйти</button>
-                        </form>
+                        <a href="/profile" class="avatar-link">
+                          <div class="avatar" title="<%= user.username %>">
+                            <svg width="40" height="40" viewBox="0 0 40 44">
+                              <circle cx="20" cy="20" r="20" fill="<%= user.avatar || '#528bff' %>" />
+                              <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20" font-family="Arial Black" font-weight="bold">
+                                <%= user.username.charAt(0).toUpperCase() %>
+                              </text>
+                            </svg>
+                            <span class="profile-nick"><%= user.username %></span>
+                          </div>
+                        </a>
                     <% } else { %>
                         <a href="/login" class="btn btn-outline-primary me-2">Вход</a>
                         <a href="/register" class="btn btn-primary">Регистрация</a>

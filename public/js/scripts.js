@@ -135,7 +135,7 @@ function preventSubmit(event) {
 }
 
 function createTag() {
-  const name = document.getElementById('newTagName').value.trim();
+  const name = document.getElementById('newTagName').value.trim().toLowerCase();
   if (!name) {
     alert('Название тэга обязательно');
     return;
@@ -143,14 +143,9 @@ function createTag() {
   fetch('/tags', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name.trim().toLowerCase() })
+    body: JSON.stringify({ name })
   })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(err => { throw new Error(err.error || 'Не удалось создать тэг') });
-      }
-      return response.json();
-    })
+    .then(response => response.json().catch(() => ({ error: 'Ошибка сервера' })))
     .then(data => {
       if (data.error) {
         alert(data.error);
@@ -175,11 +170,17 @@ function createTag() {
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
       document.getElementById('newTagName').value = '';
-      bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
-      bootstrap.Modal.getInstance(document.getElementById('newTagModal')).hide();
+      const newTagModal = document.getElementById('newTagModal');
+      if (newTagModal) {
+        bootstrap.Modal.getInstance(newTagModal).hide();
+      }
+      const newTaskModal = document.getElementById('newTaskModal');
+      if (newTaskModal) {
+        bootstrap.Modal.getInstance(newTaskModal).hide();
+      }
     })
     .catch(err => {
-      alert(err.message || 'Ошибка при создании тэга');
+      alert('Ошибка при создании тэга');
       console.error('Error in createTag:', err);
     });
 }

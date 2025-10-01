@@ -6,7 +6,7 @@ const { User, Task, Tag } = models;
 
 function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
-  res.redirect('/login');
+  res.redirect('/welcome');
 }
 
 // Home
@@ -71,7 +71,7 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
     });
 
     if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
       for (const tagName of tagNames) {
         let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
         if (!tag) {
@@ -137,7 +137,7 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
     await task.setTags([]);
 
     if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
       for (const tagName of tagNames) {
         let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
         if (!tag) {
@@ -212,7 +212,7 @@ router.post('/tags', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: normalizedName, 
+        name: { [Op.iLike]: normalizedName }, 
         user_id: req.session.user.id 
       } 
     });
@@ -238,7 +238,7 @@ router.put('/tags/:oldName', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: normalizedName, 
+        name: { [Op.iLike]: normalizedName }, 
         user_id: req.session.user.id 
       } 
     });

@@ -27,10 +27,18 @@ body {
 }
 
 .navbar-dark .nav-link {
-  color: var(--text-light); /* Белый текст для ссылок в навбаре */
+  color: var(--text-light);
 }
 
 .navbar-dark .nav-link:hover {
+  color: var(--text-muted);
+}
+
+.navbar-dark .navbar-brand {
+  color: var(--text-light);
+}
+
+.navbar-dark .navbar-brand:hover {
   color: var(--text-muted);
 }
 
@@ -242,25 +250,49 @@ pre {
   height: 40px;
   border-radius: 50%;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-}
-
-.large-avatar {
-  width: 80px;
-  height: 80px;
-}
-
-.large-avatar svg {
-  width: 80px;
-  height: 80px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  position: relative;
 }
 
 .avatar:hover {
   box-shadow: 0 0 10px rgba(82, 139, 255, 0.3);
+  transform: scale(1.1);
 }
 
 .avatar-link {
   line-height: 0;
+}
+
+.large-avatar {
+  width: 120px;
+  height: 120px;
+}
+
+.large-avatar svg {
+  width: 120px;
+  height: 120px;
+}
+
+.profile-nick {
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: var(--text-light);
+  padding: 6px 12px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+}
+.avatar:hover .profile-nick {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .alert {
@@ -291,7 +323,7 @@ pre {
 }
 
 .tag-search {
-  width: 100px;
+  width: 150px;
 }
 
 .tag-search:focus {
