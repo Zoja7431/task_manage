@@ -29,11 +29,11 @@ function openEditModal(taskId) {
 
 function createTask() {
   const formData = {
-    title: document.getElementById('newTaskTitle').value,
-    due_date: document.getElementById('newTaskDueDate').value || null,
-    priority: document.getElementById('newTaskPriority').value,
+    title: document.getElementById('taskTitle').value, // Исправлено: ID соответствует форме в home.ejs
+    due_date: document.getElementById('taskDueDate').value || null,
+    priority: document.getElementById('taskPriority').value,
     tags: document.getElementById('taskSelectedTags').value,
-    description: document.getElementById('newTaskDescription').value
+    description: document.getElementById('taskDescription').value
   };
 
   fetch('/tasks', {
@@ -56,7 +56,10 @@ function createTask() {
         alert(data.error);
         return;
       }
-      bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
+      document.getElementById('createTaskForm').reset();
+      document.querySelectorAll('#taskTagList .tag-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('taskSelectedTags').value = '';
+      bootstrap.Collapse.getInstance(document.getElementById('taskForm')).hide();
       window.location.reload();
     })
     .catch(err => {
@@ -101,10 +104,16 @@ function saveTaskChanges() {
 function markCompleted(taskId, element) {
   fetch(`/tasks/${taskId}/complete`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
   })
     .then(response => {
-      if (!response.ok) throw new Error('Failed to mark task');
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!response.ok) {
+        return response.text().then(text => { throw new Error(text) });
+      }
       return response.json();
     })
     .then(data => {
@@ -115,8 +124,8 @@ function markCompleted(taskId, element) {
       window.location.reload();
     })
     .catch(err => {
-      alert('Ошибка при отметке задачи');
       console.error('Error in markCompleted:', err);
+      alert('Ошибка при отметке задачи: ' + (err.message || 'Неизвестная ошибка'));
     });
 }
 
@@ -135,7 +144,13 @@ function preventSubmit(event) {
 }
 
 function createTag() {
-  const name = document.getElementById('newTagName').value.trim().toLowerCase();
+  const newTagInput = document.getElementById('newTagName');
+  if (!newTagInput) {
+    console.error('newTagName input not found');
+    alert('Ошибка: поле для тэга не найдено');
+    return;
+  }
+  const name = newTagInput.value.trim().toLowerCase();
   if (!name) {
     alert('Название тэга обязательно');
     return;
@@ -148,6 +163,7 @@ function createTag() {
     .then(response => response.json().catch(() => ({ error: 'Ошибка сервера' })))
     .then(data => {
       if (data.error) {
+        console.error('Tag creation response error:', data.error);
         alert(data.error);
         return;
       }
@@ -169,24 +185,25 @@ function createTag() {
       });
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
-      document.getElementById('newTagName').value = '';
-      const newTagModal = document.getElementById('newTagModal');
-      if (newTagModal) {
-        bootstrap.Modal.getInstance(newTagModal).hide();
-      }
-      const newTaskModal = document.getElementById('newTaskModal');
-      if (newTaskModal) {
-        bootstrap.Modal.getInstance(newTaskModal).hide();
+      newTagInput.value = '';
+      try {
+        const newTagModal = document.getElementById('newTagModal');
+        if (newTagModal && bootstrap.Modal.getInstance(newTagModal)) {
+          bootstrap.Modal.getInstance(newTagModal).hide();
+        }
+      } catch (err) {
+        console.error('Error closing modals:', err);
       }
     })
     .catch(err => {
-      alert('Ошибка при создании тэга');
-      console.error('Error in createTag:', err);
+      console.error('Fetch error in createTag:', err);
+      alert('Ошибка при создании тэга: ' + err.message);
     });
 }
 
 function editTagInline(oldName, listId) {
-  const tagWrapper = document.querySelector(`#${listId} .tag-item[data-value="${oldName}"]`).parentElement;
+  const tagWrapper = document.querySelector(`#${listId} .tag-item[data-value="${oldName}"]`)?.parentElement;
+  if (!tagWrapper) return;
   const originalButton = tagWrapper.querySelector('.tag-item');
   originalButton.style.display = 'none';
   const input = document.createElement('input');
@@ -232,16 +249,20 @@ function saveTagEdit(oldName, newName, listId) {
       });
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
-      const tagWrapper = document.querySelector(`#${listId} .tag-edit-input`).parentElement;
-      tagWrapper.querySelector('.tag-item').style.display = '';
-      tagWrapper.querySelector('.tag-edit-input').remove();
+      const tagWrapper = document.querySelector(`#${listId} .tag-edit-input`)?.parentElement;
+      if (tagWrapper) {
+        tagWrapper.querySelector('.tag-item').style.display = '';
+        tagWrapper.querySelector('.tag-edit-input')?.remove();
+      }
     })
     .catch(err => {
       alert(err.message || 'Ошибка при обновлении тэга');
       console.error('Error in saveTagEdit:', err);
-      const tagWrapper = document.querySelector(`#${listId} .tag-edit-input`).parentElement;
-      tagWrapper.querySelector('.tag-item').style.display = '';
-      tagWrapper.querySelector('.tag-edit-input').remove();
+      const tagWrapper = document.querySelector(`#${listId} .tag-edit-input`)?.parentElement;
+      if (tagWrapper) {
+        tagWrapper.querySelector('.tag-item').style.display = '';
+        tagWrapper.querySelector('.tag-edit-input')?.remove();
+      }
     });
 }
 
@@ -292,9 +313,9 @@ function deleteTag() {
         alert(data.error);
         return;
       }
-      document.querySelectorAll(`.tag-item[data-value="${name}"]`).forEach(btn => {
-        const parent = btn.closest('.tag-wrapper');
-        parent.remove();
+      ['taskTagList', 'editTaskTagList', 'filterTagList'].forEach(listId => {
+        const tagWrapper = document.querySelector(`#${listId} .tag-item[data-value="${name}"]`)?.parentElement;
+        if (tagWrapper) tagWrapper.remove();
       });
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
@@ -332,11 +353,15 @@ function toggleDeleteMode(button, listId) {
 function clearCompletedTasks() {
   fetch('/tasks/clear-completed', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
   })
     .then(response => {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       if (!response.ok) {
-        return response.json().then(err => { throw new Error(err.error || 'Не удалось очистить завершённые задачи') });
+        return response.text().then(text => { throw new Error(text) });
       }
       return response.json();
     })
@@ -345,24 +370,55 @@ function clearCompletedTasks() {
         alert(data.error);
         return;
       }
+      bootstrap.Modal.getInstance(document.getElementById('clearCompletedModal')).hide();
       window.location.reload();
     })
     .catch(err => {
-      alert(err.message || 'Ошибка при очистке завершённых задач');
+      alert('Ошибка при очистке завершённых задач: ' + (err.message || 'Неизвестная ошибка'));
       console.error('Error in clearCompletedTasks:', err);
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ['taskTagList', 'editTaskTagList', 'filterTagList'].forEach(listId => {
-    const tagList = document.getElementById(listId);
-    if (tagList) {
-      tagList.querySelectorAll('.tag-item').forEach(btn => {
-        btn.onclick = () => toggleTag(btn, listId === 'filterTagList' ? 'filterSelectedTags' : listId === 'taskTagList' ? 'taskSelectedTags' : 'editTaskSelectedTags');
-      });
-    }
-  });
-  document.querySelectorAll('.toggle-delete-mode').forEach(btn => {
-    btn.onclick = () => toggleDeleteMode(btn, btn.dataset.target);
-  });
+  const usernameInput = document.getElementById('profileUsername');
+  const warningSpan = document.getElementById('username-warning');
+  const originalUsername = usernameInput?.value || '';
+
+  if (usernameInput) {
+    usernameInput.addEventListener('blur', async () => {
+      if (usernameInput.value === originalUsername || !usernameInput.value) {
+        warningSpan.style.display = 'none';
+        return;
+      }
+      try {
+        const response = await fetch(`/api/check-username?username=${encodeURIComponent(usernameInput.value)}`);
+        const data = await response.json();
+        warningSpan.textContent = data.available ? '<i class="bi bi-check-circle"></i> Никнейм доступен' : '<i class="bi bi-exclamation-triangle"></i> Никнейм занят!';
+        warningSpan.classList.toggle('text-success', data.available);
+        warningSpan.classList.toggle('text-warning', !data.available);
+        warningSpan.style.display = 'inline';
+      } catch (err) {
+        warningSpan.textContent = '<i class="bi bi-exclamation-triangle"></i> Ошибка проверки';
+        warningSpan.style.display = 'inline';
+      }
+    });
+  }
+
+  const cancelTaskBtn = document.querySelector('#createTaskForm button[data-bs-toggle="collapse"]');
+  if (cancelTaskBtn) {
+    cancelTaskBtn.addEventListener('click', () => {
+      document.getElementById('createTaskForm').reset();
+      document.querySelectorAll('#taskTagList .tag-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('taskSelectedTags').value = '';
+    });
+  }
+
+  // Добавляем обработчик для submit формы создания задачи
+  const createTaskForm = document.getElementById('createTaskForm');
+  if (createTaskForm) {
+    createTaskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      createTask();
+    });
+  }
 });

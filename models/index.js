@@ -3,7 +3,19 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   const User = require('./user')(sequelize, DataTypes);
   const Task = require('./task')(sequelize, DataTypes);
-  const Tag = require('./tag')(sequelize, DataTypes);
+  const Tag = sequelize.define('Tag', {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+}, {
+  timestamps: false // Отключаем createdAt и updatedAt
+});
   const TaskTag = require('./tasktag')(sequelize, DataTypes);
 
   // Связи

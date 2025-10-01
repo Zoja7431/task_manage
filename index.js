@@ -73,6 +73,19 @@ const weeklyRoutes = require('./routes/weekly');
 app.use('/', authRoutes); // Сначала authRoutes
 app.use('/', homeRoutes);
 app.use('/', weeklyRoutes);
+app.get('/api/check-username', async (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.json({ available: true });
+  try {
+    const existing = await models.User.findOne({ 
+      where: { username, id: { [Op.ne]: req.session.user.id } } 
+    });
+    res.json({ available: !existing });
+  } catch (err) {
+    res.status(500).json({ available: false });
+  }
+});
+
 
 // Профиль
 app.get('/profile', async (req, res) => {
@@ -103,7 +116,18 @@ app.get('/profile', async (req, res) => {
 app.post('/profile', [
   body('username').notEmpty().withMessage('Имя пользователя обязательно'),
   body('email').isEmail().withMessage('Некорректный email'),
-  body('password').optional().isLength({ min: 6 }).withMessage('Пароль должен быть не менее 6 символов')
+  body('password').custom((value) => {
+    if (value && value.trim().length < 6) {
+      throw new Error('Пароль должен быть не менее 6 символов');
+    }
+    return true;
+  }),
+  body('confirm_password').custom((value, { req }) => {
+    if (req.body.password && value !== req.body.password) {
+      throw new Error('Пароли не совпадают');
+    }
+    return true;
+  }).withMessage('Пароли не совпадают')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -112,6 +136,7 @@ app.post('/profile', [
   }
 
   try {
+    const { username, email, password, avatar, confirm_password } = req.body;
     const { User } = models;
     const user = await User.findByPk(req.session.user.id);
     if (!user) {
@@ -120,10 +145,11 @@ app.post('/profile', [
       return res.redirect('/login');
     }
 
-    const { username, email, password, avatar } = req.body;
+    if (password && password.trim().length >= 6 && password === confirm_password) {
+      user.password_hash = await bcrypt.hash(password, 10);
+    }
     user.username = username;
     user.email = email;
-    if (password) user.password_hash = await bcrypt.hash(password, 10);
     if (avatar) user.avatar = avatar;
     await user.save();
 
@@ -131,8 +157,12 @@ app.post('/profile', [
     req.session.flash = [{ type: 'success', message: 'Профиль обновлён!' }];
     res.redirect('/profile');
   } catch (err) {
-    logger.error('Profile update error', { error: err.message, stack: err.stack });
-    res.render('profile', { user: req.session.user, errors: [{ msg: 'Ошибка при обновлении профиля' }] });
+    console.error('Profile update error:', {
+      message: err.message,
+      stack: err.stack,
+      body: req.body
+    });
+    res.render('profile', { user: req.session.user, errors: [{ msg: 'Ошибка при обновлении профиля: ' + err.message }] });
   }
 });
 

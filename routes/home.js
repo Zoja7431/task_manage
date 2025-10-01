@@ -1,5 +1,5 @@
 const express = require('express');
-const { Op } = require('sequelize');
+const { Sequelize, Op } = require('sequelize');
 const router = express.Router();
 const { sequelize, models } = require('../index');
 const { User, Task, Tag } = models;
@@ -19,37 +19,48 @@ router.get('/', isAuthenticated, async (req, res) => {
   if (statusFilter) where.status = statusFilter;
   if (priorityFilter) where.priority = priorityFilter;
 
-  const tasks = await Task.findAll({
-    where,
-    include: [{ model: Tag, through: { attributes: [] } }],
-    order: [['created_at', 'DESC']]
-  });
+  try {
+    const tasks = await Task.findAll({
+      where,
+      include: [{ model: Tag, through: { attributes: [] } }],
+      order: [['id', 'DESC']] // Изменено с created_at на id
+    });
 
-  let filteredTasks = tasks;
-  if (tagFilter.length) {
-    filteredTasks = tasks.filter(task => 
-      task.Tags.some(tag => tagFilter.includes(tag.name))
-    );
-  }
-
-  const today = new Date().toISOString().split('T')[0];
-  for (const task of tasks) {
-    if (task.due_date && task.due_date < today && task.status !== 'completed') {
-      task.status = 'overdue';
-      await task.save();
+    let filteredTasks = tasks;
+    if (tagFilter.length) {
+      filteredTasks = tasks.filter(task => 
+        task.Tags.some(tag => tagFilter.includes(tag.name))
+      );
     }
+
+    const today = new Date().toISOString().split('T')[0];
+    for (const task of tasks) {
+      if (task.due_date && task.due_date < today && task.status !== 'completed') {
+        task.status = 'overdue';
+        await task.save();
+      }
+    }
+
+    const tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
+
+    res.render('home', {
+      tasks: filteredTasks,
+      tags,
+      statusFilter,
+      priorityFilter,
+      tagFilter,
+      user: req.session.user
+    });
+  } catch (err) {
+    console.error('Home route error:', {
+      message: err.message,
+      stack: err.stack
+    });
+    res.status(500).render('error', { 
+      error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
+      stack: process.env.NODE_ENV === 'production' ? null : err.stack 
+    });
   }
-
-  const tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
-
-  res.render('home', {
-    tasks: filteredTasks,
-    tags,
-    statusFilter,
-    priorityFilter,
-    tagFilter,
-    user: req.session.user
-  });
 });
 
 // Создание задачи
@@ -161,14 +172,27 @@ router.post('/tasks/:id/complete', isAuthenticated, async (req, res) => {
       where: { id: req.params.id, user_id: req.session.user.id }
     });
     if (!task) {
+      console.log(`Task not found: ID ${req.params.id}, User ${req.session.user.id}`); // Лог для диагностики
       return res.status(404).json({ error: 'Задача не найдена' });
     }
     task.status = task.status === 'completed' ? 'in_progress' : 'completed';
     await task.save();
-    res.json({ message: task.status === 'completed' ? 'Задача завершена' : 'Задача возвращена в активные' });
+    const message = task.status === 'completed' ? 'Задача завершена' : 'Задача возвращена в активные';
+    req.session.flash = [{ type: 'success', message }];
+    // Если AJAX (с home), json, иначе redirect
+    if (req.headers['accept'] && req.headers['accept'].includes('json')) {
+      res.json({ message });
+    } else {
+      res.redirect(req.headers.referer || '/weekly');
+    }
   } catch (err) {
-    console.error('Task completion error:', err);
-    res.status(500).json({ error: 'Ошибка при отметке задачи' });
+    console.error('Task completion error:', {
+      message: err.message,
+      stack: err.stack,
+      taskId: req.params.id,
+      userId: req.session.user.id
+    }); // Расширенный лог
+    res.status(500).json({ error: 'Ошибка при отметке задачи: ' + err.message });
   }
 });
 
@@ -192,13 +216,17 @@ router.post('/tasks/:id/delete', isAuthenticated, async (req, res) => {
 // Очистка завершённых задач
 router.post('/tasks/clear-completed', isAuthenticated, async (req, res) => {
   try {
-    await Task.destroy({
+    const deleted = await Task.destroy({
       where: { user_id: req.session.user.id, status: 'completed' }
     });
-    res.json({ message: 'Завершённые задачи очищены' });
+    res.json({ message: 'Завершённые задачи очищены', count: deleted });
   } catch (err) {
-    console.error('Clear completed tasks error:', err);
-    res.status(500).json({ error: 'Ошибка при очистке завершённых задач' });
+    console.error('Clear completed tasks error:', {
+      message: err.message,
+      stack: err.stack,
+      userId: req.session.user.id
+    });
+    res.status(500).json({ error: 'Ошибка при очистке завершённых задач: ' + err.message });
   }
 });
 
@@ -212,8 +240,8 @@ router.post('/tags', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: { [Op.iLike]: normalizedName }, 
-        user_id: req.session.user.id 
+        user_id: req.session.user.id,
+        name: normalizedName // Проверяем точное совпадение
       } 
     });
     if (existingTag) {
@@ -223,7 +251,7 @@ router.post('/tags', isAuthenticated, async (req, res) => {
     res.json({ message: 'Тэг создан', name: tag.name });
   } catch (err) {
     console.error('Tag creation error:', err);
-    res.status(500).json({ error: 'Ошибка при создании тэга' });
+    res.status(500).json({ error: 'Ошибка при создании тэга: ' + err.message });
   }
 });
 
@@ -238,12 +266,12 @@ router.put('/tags/:oldName', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: { [Op.iLike]: normalizedName }, 
-        user_id: req.session.user.id 
+        user_id: req.session.user.id,
+        [Op.and]: [Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), normalizedName)]
       } 
     });
     if (existingTag) {
-      return res.status(400).json({ error: 'Тэг с таким именем уже существует' });
+      return res.status(400).json({ error: 'Тэг с таким именем уже существует (независимо от регистра)' });
     }
     const tag = await Tag.findOne({ where: { name: oldName, user_id: req.session.user.id } });
     if (!tag) {

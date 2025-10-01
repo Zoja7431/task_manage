@@ -10,7 +10,7 @@
               <span class="avatar large-avatar mx-auto d-block mb-3">
                 <svg width="120" height="120" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="60" fill="${user.avatar || '#528bff'}" />
-                  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="60" font-family="Arial">
+                  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="60" font-family="Arial Black, sans-serif" font-weight="900">
                     ${user && user.username ? user.username.charAt(0).toUpperCase() : 'U'}
                   </text>
                 </svg>
@@ -28,7 +28,12 @@
               <div class="mb-3">
                 <label for="profilePassword" class="form-label">Новый пароль</label>
                 <input type="password" class="form-control" id="profilePassword" name="password">
-                <div class="form-text">Оставьте пустым, если не хотите менять пароль</div>
+                <div class="form-text">Введите новый пароль, если хотите изменить текущий. Оставьте пустым для сохранения старого.</div>
+              </div>
+              <div class="mb-3">
+                <label for="profileConfirmPassword" class="form-label">Подтверждение пароля</label>
+                <input type="password" class="form-control" id="profileConfirmPassword" name="confirm_password">
+                <div class="form-text">Повторите новый пароль для подтверждения (только если меняете пароль).</div>
               </div>
               <div class="mb-3">
                 <label for="profileAvatarColor" class="form-label">Цвет аватарки</label>

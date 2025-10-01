@@ -1,58 +1,52 @@
-<%- include('base', { 
-  body: `
-    <div id="weekly-page" class="container my-4">
-      <h2 class="mb-4 text-light">Недельный обзор</h2>
-      <div class="card bg-card mb-4">
-        <div class="card-body py-2">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <span class="mx-2 text-light">Текущая неделя</span>
-            </div>
-            <div>
-              <form method="GET" action="/weekly">
-                <select class="form-select form-select-sm bg-card text-light" name="status" onchange="this.form.submit()">
-                  <option value="" <%= !statusFilter ? 'selected' : '' %>>Все статусы</option>
-                  <option value="in_progress" <%= statusFilter === 'in_progress' ? 'selected' : '' %>>В процессе</option>
-                  <option value="completed" <%= statusFilter === 'completed' ? 'selected' : '' %>>Завершено</option>
-                </select>
+<%- include('base', { body: `
+<div id="weekly-page" class="container my-4">
+  <h2 class="mb-4 text-light">Недельный обзор</h2>
+  <div class="card bg-card mb-4">
+    <div class="card-body py-2">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="mx-2 text-light">Текущая неделя</span>
+        </div>
+        <div>
+          <form method="GET" action="/weekly">
+            <select class="form-select form-select-sm bg-card text-light" name="status" onchange="this.form.submit()">
+              <option value="" ${!statusFilter ? 'selected' : ''}>Все статусы</option>
+              <option value="in_progress" ${statusFilter === 'in_progress' ? 'selected' : ''}>В процессе</option>
+              <option value="completed" ${statusFilter === 'completed' ? 'selected' : ''}>Завершено</option>
+            </select>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="weekly-container">
+    ${Object.keys(weekTasks).map(date => `
+      <h4 class="text-light">${new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })}</h4>
+      <div class="list-group mb-4">
+        ${weekTasks[date].length === 0 ? `
+          <div class="text-center py-3 text-light bg-card">Нет задач</div>
+        ` : weekTasks[date].map(task => `
+          <div class="list-group-item bg-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title' : ''}">${task.title}</h5>
+                <div class="d-flex flex-wrap align-items-center mt-2">
+                  <span class="badge ${task.status === 'in_progress' ? 'bg-primary' : task.status === 'completed' ? 'bg-success' : 'bg-danger'} status-badge me-2 mb-1">
+                    ${task.status === 'in_progress' ? 'В процессе' : task.status === 'completed' ? 'Завершено' : 'Просрочено'}
+                  </span>
+                  ${task.Tags ? task.Tags.map(tag => `
+                    <span class="badge bg-secondary tag-badge me-2 mb-1">${tag.name}</span>
+                  `).join('') : ''}
+                </div>
+              </div>
+              <form action="/tasks/${task.id}/complete" method="POST">
+                <button type="submit" class="btn btn-primary btn-sm">Отметить как выполненное</button>
               </form>
             </div>
           </div>
-        </div>
+        `).join('')}
       </div>
-      <div id="weekly-container">
-        <% Object.keys(weekTasks).forEach(date => { %>
-          <h4 class="text-light"><%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %></h4>
-          <div class="list-group mb-4">
-            <% if (weekTasks[date].length === 0) { %>
-              <div class="text-center py-3 text-light bg-card">Нет задач</div>
-            <% } else { %>
-              <% weekTasks[date].forEach(task => { %>
-                <div class="list-group-item bg-card <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %> <%= task.status === 'completed' ? 'task-completed' : '' %>">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                      <h5 class="mb-1 text-light <%= task.status === 'completed' ? 'task-title' : '' %>"><%= task.title %></h5>
-                      <div class="d-flex flex-wrap align-items-center mt-2">
-                        <span class="badge <%= task.status === 'in_progress' ? 'bg-primary' : task.status === 'completed' ? 'bg-success' : 'bg-danger' %> status-badge me-2 mb-1">
-                          <%= task.status === 'in_progress' ? 'В процессе' : task.status === 'completed' ? 'Завершено' : 'Просрочено' %>
-                        </span>
-                        <% if (task.Tags) { %>
-                          <% task.Tags.forEach(tag => { %>
-                            <span class="badge bg-secondary tag-badge me-2 mb-1"><%= tag.name %></span>
-                          <% }) %>
-                        <% } %>
-                      </div>
-                    </div>
-                    <form action="/tasks/<%= task.id %>/complete" method="POST">
-                      <button type="submit" class="btn btn-primary btn-sm">Отметить как выполненное</button>
-                    </form>
-                  </div>
-                </div>
-              <% }) %>
-            <% } %>
-          </div>
-        <% }) %>
-      </div>
-    </div>
-  `
-}) %>
+    `).join('')}
+  </div>
+</div>
+`}) %>
