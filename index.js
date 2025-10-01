@@ -7,6 +7,7 @@ const { Sequelize, Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
 
 // Настройка Sequelize
 const sequelize = new Sequelize({
@@ -66,11 +67,11 @@ app.use((req, res, next) => {
 });
 
 // Маршруты
-const homeRoutes = require('./routes/home');
 const authRoutes = require('./routes/auth');
+const homeRoutes = require('./routes/home');
 const weeklyRoutes = require('./routes/weekly');
+app.use('/', authRoutes); // Сначала authRoutes
 app.use('/', homeRoutes);
-app.use('/', authRoutes);
 app.use('/', weeklyRoutes);
 
 // Профиль
@@ -78,7 +79,7 @@ app.get('/profile', async (req, res) => {
   if (!req.session.user) {
     logger.info('Profile access denied: No user in session');
     req.session.flash = [{ type: 'danger', message: 'Пожалуйста, войдите' }];
-    return res.redirect('/welcome');
+    return res.redirect('/login');
   }
 
   try {
@@ -87,7 +88,7 @@ app.get('/profile', async (req, res) => {
     if (!user) {
       logger.error('Profile error: User not found', { userId: req.session.user.id });
       req.session.flash = [{ type: 'danger', message: 'Пользователь не найден' }];
-      return res.redirect('/welcome');
+      return res.redirect('/login');
     }
     res.render('profile', { user: { ...user.dataValues, avatar: user.avatar || '#528bff' }, errors: [] });
   } catch (err) {
@@ -116,13 +117,13 @@ app.post('/profile', [
     if (!user) {
       logger.error('Profile update error: User not found', { userId: req.session.user.id });
       req.session.flash = [{ type: 'danger', message: 'Пользователь не найден' }];
-      return res.redirect('/welcome');
+      return res.redirect('/login');
     }
 
     const { username, email, password, avatar } = req.body;
     user.username = username;
     user.email = email;
-    if (password) user.password = password;
+    if (password) user.password_hash = await bcrypt.hash(password, 10);
     if (avatar) user.avatar = avatar;
     await user.save();
 
@@ -141,7 +142,7 @@ app.use((err, req, res, next) => {
   console.error('Error details:', { message: err.message, stack: err.stack });
   res.status(500).render('error', { 
     error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack 
   });
 });
 

@@ -10,15 +10,19 @@ function isAuthenticated(req, res, next) {
 }
 
 router.get('/weekly', isAuthenticated, async (req, res) => {
+  const statusFilter = req.query.status || '';
   const today = new Date();
   const weekEnd = new Date(today);
   weekEnd.setDate(today.getDate() + 6);
 
+  const where = {
+    user_id: req.session.user.id,
+    due_date: { [Op.between]: [today.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
+  };
+  if (statusFilter) where.status = statusFilter;
+
   const tasks = await Task.findAll({
-    where: {
-      user_id: req.session.user.id,
-      due_date: { [Op.between]: [today.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
-    },
+    where,
     include: [{ model: Tag, through: { attributes: [] } }],
     order: [['due_date', 'ASC']]
   });
@@ -44,7 +48,7 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
     }
   }
 
-  res.render('weekly', { weekTasks, today });
+  res.render('weekly', { weekTasks, today, statusFilter });
 });
 
 module.exports = router;

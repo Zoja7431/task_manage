@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
 const { sequelize, models } = require('../index');
 const { User } = models;
 const router = express.Router();
@@ -28,9 +29,10 @@ router.post('/register', [
       return res.redirect('/register');
     }
 
-    await User.create({ username, email, password, avatar: '#528bff' });
+    const password_hash = await bcrypt.hash(password, 10);
+    await User.create({ username, email, password_hash, avatar: '#528bff' });
     req.session.flash = [{ type: 'success', message: 'Регистрация успешна! Пожалуйста, войдите.' }];
-    res.redirect('/welcome');
+    res.redirect('/login');
   } catch (err) {
     console.error('Registration error:', err);
     req.session.flash = [{ type: 'danger', message: 'Ошибка при регистрации' }];
@@ -39,7 +41,18 @@ router.post('/register', [
 });
 
 // Вход
+router.get('/login', (req, res) => {
+  console.log('Handling GET /login');
+  res.render('welcome', { errors: [] });
+});
+
+router.post('/login', (req, res) => {
+  console.log('Handling POST /login');
+  res.redirect('/welcome');
+});
+
 router.get('/welcome', (req, res) => {
+  console.log('Handling GET /welcome');
   res.render('welcome', { errors: [] });
 });
 
@@ -56,8 +69,14 @@ router.post('/welcome', [
 
   try {
     const user = await User.findOne({ where: { email } });
-    if (!user || user.password !== password) {
-      req.session.flash = [{ type: 'danger', message: 'Неверный email или пароль' }];
+    if (!user) {
+      req.session.flash = [{ type: 'danger', message: 'Email не найден' }];
+      return res.redirect('/welcome');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      req.session.flash = [{ type: 'danger', message: 'Неверный пароль' }];
       return res.redirect('/welcome');
     }
 
@@ -79,7 +98,7 @@ router.post('/logout', (req, res) => {
       req.session.flash = [{ type: 'danger', message: 'Ошибка при выходе' }];
       return res.redirect('/');
     }
-    res.redirect('/welcome');
+    res.redirect('/login');
   });
 });
 

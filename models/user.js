@@ -20,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     avatar: {
-      type: DataTypes.TEXT, // Храним SVG как текст
-      allowNull: true
+      type: DataTypes.STRING(7),
+      defaultValue: '#528bff'
     },
     created_at: {
       type: DataTypes.DATE,

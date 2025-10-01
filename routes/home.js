@@ -6,13 +6,8 @@ const { User, Task, Tag } = models;
 
 function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
-  res.status(401).json({ error: 'Неавторизован' });
+  res.redirect('/login');
 }
-
-// Welcome
-router.get('/welcome', (req, res) => {
-  res.render('welcome');
-});
 
 // Home
 router.get('/', isAuthenticated, async (req, res) => {
@@ -61,7 +56,8 @@ router.get('/', isAuthenticated, async (req, res) => {
 router.post('/tasks', isAuthenticated, async (req, res) => {
   const { title, due_date, priority, tags, description } = req.body;
   if (!title) {
-    return res.status(400).json({ error: 'Название задачи обязательно' });
+    req.session.flash = [{ type: 'danger', message: 'Название задачи обязательно' }];
+    return res.redirect('/');
   }
 
   try {
@@ -75,7 +71,7 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
     });
 
     if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
+      const tagNames = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
       for (const tagName of tagNames) {
         let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
         if (!tag) {
@@ -85,9 +81,12 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
       }
     }
 
-    res.json({ message: 'Задача создана' });
+    req.session.flash = [{ type: 'success', message: 'Задача создана' }];
+    res.redirect('/');
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка при создании задачи' });
+    console.error('Task creation error:', err);
+    req.session.flash = [{ type: 'danger', message: 'Ошибка при создании задачи' }];
+    res.redirect('/');
   }
 });
 
@@ -109,6 +108,7 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
       description: task.description
     });
   } catch (err) {
+    console.error('Task fetch error:', err);
     res.status(500).json({ error: 'Ошибка при получении задачи' });
   }
 });
@@ -137,7 +137,7 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
     await task.setTags([]);
 
     if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
+      const tagNames = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
       for (const tagName of tagNames) {
         let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
         if (!tag) {
@@ -149,6 +149,7 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
 
     res.json({ message: 'Задача обновлена' });
   } catch (err) {
+    console.error('Task update error:', err);
     res.status(500).json({ error: 'Ошибка при обновлении задачи' });
   }
 });
@@ -166,6 +167,7 @@ router.post('/tasks/:id/complete', isAuthenticated, async (req, res) => {
     await task.save();
     res.json({ message: task.status === 'completed' ? 'Задача завершена' : 'Задача возвращена в активные' });
   } catch (err) {
+    console.error('Task completion error:', err);
     res.status(500).json({ error: 'Ошибка при отметке задачи' });
   }
 });
@@ -182,6 +184,7 @@ router.post('/tasks/:id/delete', isAuthenticated, async (req, res) => {
     await task.destroy();
     res.json({ message: 'Задача удалена' });
   } catch (err) {
+    console.error('Task deletion error:', err);
     res.status(500).json({ error: 'Ошибка при удалении задачи' });
   }
 });
@@ -194,6 +197,7 @@ router.post('/tasks/clear-completed', isAuthenticated, async (req, res) => {
     });
     res.json({ message: 'Завершённые задачи очищены' });
   } catch (err) {
+    console.error('Clear completed tasks error:', err);
     res.status(500).json({ error: 'Ошибка при очистке завершённых задач' });
   }
 });
@@ -208,16 +212,17 @@ router.post('/tags', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: { [Op.iLike]: normalizedName }, 
+        name: normalizedName, 
         user_id: req.session.user.id 
       } 
     });
     if (existingTag) {
       return res.status(400).json({ error: 'Тэг с таким именем уже существует' });
     }
-    const tag = await Tag.create({ name: name.trim(), user_id: req.session.user.id });
+    const tag = await Tag.create({ name: normalizedName, user_id: req.session.user.id });
     res.json({ message: 'Тэг создан', name: tag.name });
   } catch (err) {
+    console.error('Tag creation error:', err);
     res.status(500).json({ error: 'Ошибка при создании тэга' });
   }
 });
@@ -233,7 +238,7 @@ router.put('/tags/:oldName', isAuthenticated, async (req, res) => {
   try {
     const existingTag = await Tag.findOne({ 
       where: { 
-        name: { [Op.iLike]: normalizedName }, 
+        name: normalizedName, 
         user_id: req.session.user.id 
       } 
     });
@@ -244,10 +249,11 @@ router.put('/tags/:oldName', isAuthenticated, async (req, res) => {
     if (!tag) {
       return res.status(404).json({ error: 'Тэг не найден' });
     }
-    tag.name = name.trim();
+    tag.name = normalizedName;
     await tag.save();
     res.json({ message: 'Тэг обновлён', name: tag.name });
   } catch (err) {
+    console.error('Tag update error:', err);
     res.status(500).json({ error: 'Ошибка при обновлении тэга' });
   }
 });
@@ -270,6 +276,7 @@ router.get('/api/tags/:name/tasks', isAuthenticated, async (req, res) => {
     });
     res.json({ taskCount: tasks.length });
   } catch (err) {
+    console.error('Tag tasks check error:', err);
     res.status(500).json({ error: 'Ошибка при проверке тэга' });
   }
 });
@@ -285,6 +292,7 @@ router.delete('/tags/:name', isAuthenticated, async (req, res) => {
     await tag.destroy();
     res.json({ message: 'Тэг удалён' });
   } catch (err) {
+    console.error('Tag deletion error:', err);
     res.status(500).json({ error: 'Ошибка при удалении тэга' });
   }
 });

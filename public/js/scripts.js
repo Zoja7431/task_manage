@@ -23,7 +23,45 @@ function openEditModal(taskId) {
     })
     .catch(err => {
       alert('Ошибка при загрузке задачи');
-      console.error(err);
+      console.error('Error in openEditModal:', err);
+    });
+}
+
+function createTask() {
+  const formData = {
+    title: document.getElementById('newTaskTitle').value,
+    due_date: document.getElementById('newTaskDueDate').value || null,
+    priority: document.getElementById('newTaskPriority').value,
+    tags: document.getElementById('taskSelectedTags').value,
+    description: document.getElementById('newTaskDescription').value
+  };
+
+  fetch('/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(formData).toString()
+  })
+    .then(response => {
+      if (response.redirected) {
+        window.location.href = response.url;
+        return;
+      }
+      if (!response.ok) {
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось создать задачу') });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data && data.error) {
+        alert(data.error);
+        return;
+      }
+      bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
+      window.location.reload();
+    })
+    .catch(err => {
+      alert(err.message || 'Ошибка при создании задачи');
+      console.error('Error in createTask:', err);
     });
 }
 
@@ -56,7 +94,7 @@ function saveTaskChanges() {
     })
     .catch(err => {
       alert('Ошибка при сохранении задачи');
-      console.error(err);
+      console.error('Error in saveTaskChanges:', err);
     });
 }
 
@@ -78,7 +116,7 @@ function markCompleted(taskId, element) {
     })
     .catch(err => {
       alert('Ошибка при отметке задачи');
-      console.error(err);
+      console.error('Error in markCompleted:', err);
     });
 }
 
@@ -105,11 +143,11 @@ function createTag() {
   fetch('/tags', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name })
+    body: JSON.stringify({ name: name.trim().toLowerCase() })
   })
     .then(response => {
       if (!response.ok) {
-        return response.text().then(text => { throw new Error(text || 'Failed to create tag'); });
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось создать тэг') });
       }
       return response.json();
     })
@@ -137,11 +175,12 @@ function createTag() {
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
       document.getElementById('newTagName').value = '';
+      bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
       bootstrap.Modal.getInstance(document.getElementById('newTagModal')).hide();
     })
     .catch(err => {
       alert(err.message || 'Ошибка при создании тэга');
-      console.error(err);
+      console.error('Error in createTag:', err);
     });
 }
 
@@ -169,11 +208,11 @@ function saveTagEdit(oldName, newName, listId) {
   fetch(`/tags/${encodeURIComponent(oldName)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: newName.trim() })
+    body: JSON.stringify({ name: newName.trim().toLowerCase() })
   })
     .then(response => {
       if (!response.ok) {
-        return response.text().then(text => { throw new Error(text || 'Failed to update tag'); });
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось обновить тэг') });
       }
       return response.json();
     })
@@ -198,7 +237,7 @@ function saveTagEdit(oldName, newName, listId) {
     })
     .catch(err => {
       alert(err.message || 'Ошибка при обновлении тэга');
-      console.error(err);
+      console.error('Error in saveTagEdit:', err);
       const tagWrapper = document.querySelector(`#${listId} .tag-edit-input`).parentElement;
       tagWrapper.querySelector('.tag-item').style.display = '';
       tagWrapper.querySelector('.tag-edit-input').remove();
@@ -212,7 +251,7 @@ function confirmDeleteTag(name) {
   })
     .then(response => {
       if (!response.ok) {
-        return response.text().then(text => { throw new Error(text || 'Failed to check tag usage'); });
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось проверить тэг') });
       }
       return response.json();
     })
@@ -231,7 +270,7 @@ function confirmDeleteTag(name) {
     })
     .catch(err => {
       alert(err.message || 'Ошибка при проверке тэга');
-      console.error(err);
+      console.error('Error in confirmDeleteTag:', err);
     });
 }
 
@@ -243,7 +282,7 @@ function deleteTag() {
   })
     .then(response => {
       if (!response.ok) {
-        return response.text().then(text => { throw new Error(text || 'Failed to delete tag'); });
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось удалить тэг') });
       }
       return response.json();
     })
@@ -262,7 +301,7 @@ function deleteTag() {
     })
     .catch(err => {
       alert(err.message || 'Ошибка при удалении тэга');
-      console.error(err);
+      console.error('Error in deleteTag:', err);
     });
 }
 
@@ -296,7 +335,7 @@ function clearCompletedTasks() {
   })
     .then(response => {
       if (!response.ok) {
-        return response.text().then(text => { throw new Error(text || 'Failed to clear completed tasks'); });
+        return response.json().then(err => { throw new Error(err.error || 'Не удалось очистить завершённые задачи') });
       }
       return response.json();
     })
@@ -309,7 +348,7 @@ function clearCompletedTasks() {
     })
     .catch(err => {
       alert(err.message || 'Ошибка при очистке завершённых задач');
-      console.error(err);
+      console.error('Error in clearCompletedTasks:', err);
     });
 }
 

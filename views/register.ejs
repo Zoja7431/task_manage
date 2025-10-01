@@ -17,14 +17,15 @@
               </div>
               <div class="mb-3">
                 <label for="password" class="form-label">Пароль</label>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                <div class="form-text">Не менее 6 символов</div>
               </div>
-              <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+              <button type="submit" class="btn btn-primary w-100 mb-3">Зарегистрироваться</button>
             </form>
-            <div class="text-center mt-3">
-              <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+            <div class="text-center">
+              <p>Уже есть аккаунт? <a href="/login">Войдите</a></p>
             </div>
-            ${errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('')}
+            ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
           </div>
         </div>
       </div>
