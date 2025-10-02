@@ -7,7 +7,17 @@ function openEditModal(taskId) {
     .then(task => {
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editTaskTitle').value = task.title;
-      document.getElementById('editTaskDueDate').value = task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '';
+      // Fix for date: if no date, set empty string to avoid Invalid Date
+      let dueDateValue = '';
+      if (task.due_date) {
+        try {
+          dueDateValue = new Date(task.due_date).toISOString().slice(0, 16);
+        } catch (e) {
+          console.error('Invalid date in task:', task.due_date);
+          dueDateValue = ''; // Если дата invalid, set empty
+        }
+      }
+      document.getElementById('editTaskDueDate').value = dueDateValue;
       document.getElementById('editTaskPriority').value = task.priority;
       document.getElementById('editTaskDescription').value = task.description || '';
       
@@ -29,7 +39,7 @@ function openEditModal(taskId) {
 
 function createTask() {
   const formData = {
-    title: document.getElementById('taskTitle').value, // Исправлено: ID соответствует форме в home.ejs
+    title: document.getElementById('taskTitle').value,
     due_date: document.getElementById('taskDueDate').value || null,
     priority: document.getElementById('taskPriority').value,
     tags: document.getElementById('taskSelectedTags').value,
@@ -38,7 +48,10 @@ function createTask() {
 
   fetch('/tasks', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'  // Request JSON response
+    },
     body: new URLSearchParams(formData).toString()
   })
     .then(response => {
@@ -56,11 +69,51 @@ function createTask() {
         alert(data.error);
         return;
       }
+      if (data && data.id) {
+        // Append new task card using data.id
+        const activeTasks = document.getElementById('active-tasks');
+        const newCard = document.createElement('div');
+        newCard.className = `task-card card mb-3 priority-${formData.priority} new-task`;
+        newCard.innerHTML = `
+          <div class="card-body">
+            <div class="d-flex align-items-start">
+              <div class="custom-checkbox me-3 mt-2">
+                <input type="checkbox" id="task-${data.id}" onclick="markCompleted('${data.id}', this)">
+                <label for="task-${data.id}"></label>
+              </div>
+              <div class="flex-grow-1">
+                <h5 class="card-title mb-1">${formData.title}</h5>
+                ${formData.description ? `<p class="card-text text-muted small">${formData.description}</p>` : ''}
+                <div class="d-flex flex-wrap align-items-center mt-2">
+                  <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
+                  ${formData.due_date && formData.due_date !== '' ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(formData.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                  ${formData.tags ? formData.tags.split(',').map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>`).join('') : ''}
+                </div>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                  <li><a class="dropdown-item" href="#" onclick="openEditModal('${data.id}')">Редактировать</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${data.id}', this)">Удалить</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+        activeTasks.prepend(newCard);
+        setTimeout(() => newCard.classList.remove('new-task'), 500);
+      } else {
+        // Fallback: reload page if no id (non-AJAX response)
+        window.location.reload();
+      }
+
       document.getElementById('createTaskForm').reset();
       document.querySelectorAll('#taskTagList .tag-item').forEach(btn => btn.classList.remove('active'));
       document.getElementById('taskSelectedTags').value = '';
       bootstrap.Collapse.getInstance(document.getElementById('taskForm')).hide();
-      window.location.reload();
     })
     .catch(err => {
       alert(err.message || 'Ошибка при создании задачи');
@@ -70,9 +123,11 @@ function createTask() {
 
 function saveTaskChanges() {
   const taskId = document.getElementById('editTaskId').value;
+  let dueDate = document.getElementById('editTaskDueDate').value;
+  if (!dueDate || dueDate === '') dueDate = null;  // Fix: ensure null for empty date
   const formData = {
     title: document.getElementById('editTaskTitle').value,
-    due_date: document.getElementById('editTaskDueDate').value || null,
+    due_date: dueDate,
     priority: document.getElementById('editTaskPriority').value,
     tags: document.getElementById('editTaskSelectedTags').value,
     description: document.getElementById('editTaskDescription').value
@@ -92,8 +147,28 @@ function saveTaskChanges() {
         alert(data.error);
         return;
       }
+      // Update the card
+      const card = document.querySelector(`#task-${taskId}`).closest('.task-card');
+      if (card) {
+        card.className = `task-card card mb-3 priority-${formData.priority}`;
+        const title = card.querySelector('.card-title');
+        title.textContent = formData.title;
+        const desc = card.querySelector('.card-text');
+        if (desc) {
+          desc.textContent = formData.description;
+        } else if (formData.description) {
+          title.insertAdjacentHTML('afterend', `<p class="card-text text-muted small">${formData.description}</p>`);
+        }
+        const badges = card.querySelector('.d-flex.flex-wrap');
+        if (badges) {
+          badges.innerHTML = `
+            <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
+            ${formData.due_date && formData.due_date !== '' ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(formData.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+            ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
+          `;
+        }
+      }
       bootstrap.Modal.getInstance(document.getElementById('editTaskModal')).hide();
-      window.location.reload();
     })
     .catch(err => {
       alert('Ошибка при сохранении задачи');
@@ -108,7 +183,7 @@ function markCompleted(taskId, element) {
   })
     .then(response => {
       if (response.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/welcome';
         return;
       }
       if (!response.ok) {
@@ -121,11 +196,80 @@ function markCompleted(taskId, element) {
         alert(data.error);
         return;
       }
-      window.location.reload();
+      const isWeekly = document.getElementById('weekly-page') !== null;
+      const card = element.closest(isWeekly ? '.list-group-item' : '.task-card');
+      const title = card.querySelector(isWeekly ? 'h5' : '.card-title');
+      const statusBadge = card.querySelector('.status-badge');
+      const isCheckbox = element.tagName === 'INPUT' && element.type === 'checkbox';
+      const activeTasks = !isWeekly ? document.getElementById('active-tasks') : null;
+      const completedTasks = !isWeekly ? document.getElementById('completed-tasks') : null;
+
+      card.classList.add('remove-task');
+      setTimeout(() => {
+        card.classList.remove('remove-task');
+        if (data.status === 'completed') {
+          card.classList.add('task-completed');
+          title.classList.add('text-decoration-line-through', 'text-muted');
+          if (statusBadge) {
+            statusBadge.classList.remove('bg-primary', 'bg-danger');
+            statusBadge.classList.add('bg-success');
+            statusBadge.textContent = 'Завершено';
+          }
+          if (isCheckbox) {
+            element.checked = true;
+            if (completedTasks) {
+              completedTasks.appendChild(card);
+              card.classList.add('new-task');
+              setTimeout(() => card.classList.remove('new-task'), 500);
+            }
+          } else { // Для weekly button
+            element.textContent = 'Вернуть в процесс';
+          }
+        } else {
+          card.classList.remove('task-completed');
+          title.classList.remove('text-decoration-line-through', 'text-muted');
+          if (statusBadge) {
+            statusBadge.classList.remove('bg-success', 'bg-danger');
+            statusBadge.classList.add('bg-primary');
+            statusBadge.textContent = 'В процессе';
+          }
+          if (isCheckbox) {
+            element.checked = false;
+            if (activeTasks) {
+              activeTasks.appendChild(card);
+              card.classList.add('new-task');
+              setTimeout(() => card.classList.remove('new-task'), 500);
+            }
+          } else { // Для weekly button
+            element.textContent = 'Отметить как выполненное';
+          }
+        }
+      }, 500);
     })
     .catch(err => {
       console.error('Error in markCompleted:', err);
       alert('Ошибка при отметке задачи: ' + (err.message || 'Неизвестная ошибка'));
+    });
+}
+
+function deleteTask(taskId, element) {
+  if (!confirm('Удалить задачу?')) return;
+  fetch(`/tasks/${taskId}/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to delete task');
+      return response.json();
+    })
+    .then(data => {
+      const card = element.closest('.task-card');
+      card.classList.add('remove-task');
+      setTimeout(() => card.remove(), 500);
+    })
+    .catch(err => {
+      alert('Ошибка при удалении задачи');
+      console.error('Error in deleteTask:', err);
     });
 }
 
@@ -174,7 +318,7 @@ function createTag() {
           const wrapper = document.createElement('div');
           wrapper.className = 'tag-wrapper d-flex align-items-center';
           wrapper.innerHTML = `
-            <button type="button" class="btn btn-sm btn-outline-secondary tag-item me-1" data-value="${data.name}" ondblclick="editTagInline('${data.name}', '${listId}')">${data.name}</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary tag-item me-1" data-value="${data.name}" onclick="toggleTag(event, this, '${listId === 'filterTagList' ? 'filterSelectedTags' : listId === 'editTaskTagList' ? 'editTaskSelectedTags' : 'taskSelectedTags'}')" ondblclick="editTagInline('${data.name}', '${listId}')">${data.name}</button>
             <button type="button" class="btn btn-sm btn-outline-danger tag-delete d-none" data-value="${data.name}" onclick="confirmDeleteTag('${data.name}')"><i class="bi bi-dash-circle"></i></button>
           `;
           tagList.appendChild(wrapper);
@@ -186,13 +330,11 @@ function createTag() {
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
       newTagInput.value = '';
-      try {
-        const newTagModal = document.getElementById('newTagModal');
-        if (newTagModal && bootstrap.Modal.getInstance(newTagModal)) {
-          bootstrap.Modal.getInstance(newTagModal).hide();
-        }
-      } catch (err) {
-        console.error('Error closing modals:', err);
+      // Hide newTagModal only if not inside editTaskModal (prevent closing parent)
+      const newTagModal = bootstrap.Modal.getInstance(document.getElementById('newTagModal'));
+      const editModal = bootstrap.Modal.getInstance(document.getElementById('editTaskModal'));
+      if (newTagModal && !editModal) {
+        newTagModal.hide();
       }
     })
     .catch(err => {
@@ -282,13 +424,15 @@ function confirmDeleteTag(name) {
         alert(data.error);
         return;
       }
-      document.getElementById('deleteTagName').value = name;
-      const message = data.taskCount > 0 
-        ? `Тэг "${name}" привязан к ${data.taskCount} задачам. Вы уверены, что хотите его удалить?`
-        : `Вы уверены, что хотите удалить тэг "${name}"?`;
-      document.getElementById('deleteTagMessage').textContent = message;
-      const modal = new bootstrap.Modal(document.getElementById('deleteTagModal'));
-      modal.show();
+      if (data.taskCount > 0) {
+        document.getElementById('deleteTagName').value = name;
+        const message = `Тэг "${name}" привязан к ${data.taskCount} задачам. Вы уверены, что хотите его удалить?`;
+        document.getElementById('deleteTagMessage').textContent = message;
+        const modal = new bootstrap.Modal(document.getElementById('deleteTagModal'));
+        modal.show();
+      } else {
+        deleteTagDirect(name);
+      }
     })
     .catch(err => {
       alert(err.message || 'Ошибка при проверке тэга');
@@ -296,8 +440,7 @@ function confirmDeleteTag(name) {
     });
 }
 
-function deleteTag() {
-  const name = document.getElementById('deleteTagName').value;
+function deleteTagDirect(name) {
   fetch(`/tags/${encodeURIComponent(name)}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' }
@@ -319,15 +462,22 @@ function deleteTag() {
       });
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
-      bootstrap.Modal.getInstance(document.getElementById('deleteTagModal')).hide();
     })
     .catch(err => {
       alert(err.message || 'Ошибка при удалении тэга');
-      console.error('Error in deleteTag:', err);
+      console.error('Error in deleteTagDirect:', err);
     });
 }
 
-function toggleTag(button, inputId) {
+function deleteTag() {
+  const name = document.getElementById('deleteTagName').value;
+  deleteTagDirect(name);
+  bootstrap.Modal.getInstance(document.getElementById('deleteTagModal')).hide();
+}
+
+// Fix for dropdown: event first to stopPropagation
+function toggleTag(event, button, inputId) {
+  event.stopPropagation(); // Prevent dropdown close
   button.classList.toggle('active');
   updateSelectedTags(inputId);
 }
@@ -341,13 +491,12 @@ function updateSelectedTags(inputId) {
 }
 
 function toggleDeleteMode(button, listId) {
-  const tagList = document.getElementById(listId);
-  const isDeleteMode = button.classList.contains('delete-mode-active');
   button.classList.toggle('delete-mode-active');
-  button.textContent = isDeleteMode ? 'Удалить тэги' : 'Готово';
-  tagList.querySelectorAll('.tag-delete').forEach(btn => {
-    btn.classList.toggle('d-none');
-  });
+  const active = button.classList.contains('delete-mode-active');
+  button.textContent = active ? 'Готово' : 'Удалить тэги';
+  const tagList = document.getElementById(listId);
+  tagList.querySelectorAll('.tag-delete').forEach(btn => btn.classList.toggle('d-none', !active));
+  tagList.querySelectorAll('.tag-item').forEach(btn => btn.classList.toggle('delete-mode', active));
 }
 
 function clearCompletedTasks() {
@@ -357,7 +506,7 @@ function clearCompletedTasks() {
   })
     .then(response => {
       if (response.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/welcome';
         return;
       }
       if (!response.ok) {
@@ -370,8 +519,14 @@ function clearCompletedTasks() {
         alert(data.error);
         return;
       }
+      const completedCards = document.querySelectorAll('#completed-tasks .task-card');
+      completedCards.forEach((card, index) => {
+        setTimeout(() => {
+          card.classList.add('remove-task');
+          setTimeout(() => card.remove(), 500);
+        }, index * 100);
+      });
       bootstrap.Modal.getInstance(document.getElementById('clearCompletedModal')).hide();
-      window.location.reload();
     })
     .catch(err => {
       alert('Ошибка при очистке завершённых задач: ' + (err.message || 'Неизвестная ошибка'));
@@ -420,5 +575,95 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       createTask();
     });
+  }
+
+  // Состояние collapse для completed
+  const completedCollapse = document.getElementById('completedCollapse');
+  const showCompletedBtn = document.querySelector('.show-completed');
+  if (completedCollapse && showCompletedBtn) {
+    if (localStorage.getItem('showCompleted') === 'true') {
+      new bootstrap.Collapse(completedCollapse, { toggle: false }).show();
+      showCompletedBtn.textContent = 'Скрыть завершённые';
+    }
+    completedCollapse.addEventListener('shown.bs.collapse', () => {
+      showCompletedBtn.textContent = 'Скрыть завершённые';
+      localStorage.setItem('showCompleted', 'true');
+    });
+    completedCollapse.addEventListener('hidden.bs.collapse', () => {
+      showCompletedBtn.textContent = 'Показать завершённые';
+      localStorage.setItem('showCompleted', 'false');
+    });
+  }
+
+  // Клиентская валидация паролей в профиле
+  const passwordInput = document.getElementById('profilePassword');
+  const confirmInput = document.getElementById('profileConfirmPassword');
+  if (passwordInput && confirmInput) {
+    const passwordError = document.createElement('div');
+    passwordError.className = 'invalid-feedback d-inline ms-2';
+    passwordInput.parentNode.appendChild(passwordError);
+
+    const confirmError = document.createElement('div');
+    confirmError.className = 'invalid-feedback d-inline ms-2';
+    confirmInput.parentNode.appendChild(confirmError);
+
+    function validatePasswords() {
+      passwordError.textContent = '';
+      confirmError.textContent = '';
+      if (passwordInput.value && passwordInput.value.length < 6) {
+        passwordError.textContent = 'Пароль должен быть не менее 6 символов';
+      }
+      if (passwordInput.value && confirmInput.value !== passwordInput.value) {
+        confirmError.textContent = 'Пароли не совпадают';
+      }
+    }
+    passwordInput.addEventListener('input', validatePasswords);
+    confirmInput.addEventListener('input', validatePasswords);
+  }
+
+  // Клиентская валидация для формы регистрации
+  const registerForm = document.querySelector('form[action="/register"]');
+  if (registerForm) {
+    const password = registerForm.querySelector('#password');
+    const confirm = registerForm.querySelector('#confirm_password');
+    // Добавляем div для ошибок сбоку от полей
+    const pError = document.createElement('div');
+    pError.className = 'invalid-feedback d-inline ms-2';
+    if (password) password.parentNode.appendChild(pError);
+
+    const cError = document.createElement('div');
+    cError.className = 'invalid-feedback d-inline ms-2';
+    if (confirm) confirm.parentNode.appendChild(cError);
+
+    function validate() {
+      pError.textContent = password.value && password.value.length < 6 ? 'Пароль должен быть не менее 6 символов' : '';
+      cError.textContent = confirm.value !== password.value ? 'Пароли не совпадают' : '';
+    }
+
+    if (password) password.addEventListener('input', validate);
+    if (confirm) confirm.addEventListener('input', validate);
+  }
+
+  // Исправление для сброса названия задачи при toggle accordion
+  const titleInput = document.getElementById('taskTitle');
+  if (titleInput) {
+    let savedTitle = '';
+    document.querySelectorAll('#optionalFields .accordion-collapse').forEach(collapse => {
+      collapse.addEventListener('show.bs.collapse', () => {
+        savedTitle = titleInput.value;
+        console.log('Accordion opening, saved title:', savedTitle); // Для отладки
+      });
+      collapse.addEventListener('shown.bs.collapse', () => {
+        titleInput.value = savedTitle;
+        console.log('Accordion opened, restored title:', titleInput.value); // Для отладки
+      });
+    });
+  }
+  
+});
+// Добавлено для предотвращения кэша после logout: Force reload если страница из bfcache (back button)
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    window.location.reload();
   }
 });

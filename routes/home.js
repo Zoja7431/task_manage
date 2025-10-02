@@ -13,7 +13,7 @@ function isAuthenticated(req, res, next) {
 router.get('/', isAuthenticated, async (req, res) => {
   const statusFilter = req.query.status || '';
   const priorityFilter = req.query.priority || '';
-  const tagFilter = req.query.tags ? (Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags]) : [];
+  const tagFilter = req.query.tags ? (typeof req.query.tags === 'string' ? req.query.tags.split(',').map(t => t.trim()).filter(t => t) : Array.isArray(req.query.tags) ? req.query.tags : []) : [];
 
   const where = { user_id: req.session.user.id };
   if (statusFilter) where.status = statusFilter;
@@ -23,22 +23,36 @@ router.get('/', isAuthenticated, async (req, res) => {
     const tasks = await Task.findAll({
       where,
       include: [{ model: Tag, through: { attributes: [] } }],
-      order: [['id', 'DESC']] // Изменено с created_at на id
+      order: [['id', 'DESC']]
     });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const task of tasks) {
+      // Нормализация due_date: если invalid или '', set null
+      if (task.due_date && (typeof task.due_date !== 'string' || task.due_date.trim() === '' || isNaN(new Date(task.due_date).getTime()))) {
+        task.due_date = null;
+        await task.save(); // Сохраняем фикс в БД
+      }
+      const dueDate = task.due_date ? new Date(task.due_date) : null;
+      let changed = false;
+      if (dueDate && dueDate < today && task.status !== 'completed') {
+        task.status = 'overdue';
+        changed = true;
+      } else if (task.status === 'overdue' && (!dueDate || dueDate >= today)) {
+        task.status = 'in_progress';
+        changed = true;
+      }
+      if (changed) {
+        await task.save();
+      }
+    }
 
     let filteredTasks = tasks;
     if (tagFilter.length) {
       filteredTasks = tasks.filter(task => 
         task.Tags.some(tag => tagFilter.includes(tag.name))
       );
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    for (const task of tasks) {
-      if (task.due_date && task.due_date < today && task.status !== 'completed') {
-        task.status = 'overdue';
-        await task.save();
-      }
     }
 
     const tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
@@ -65,11 +79,12 @@ router.get('/', isAuthenticated, async (req, res) => {
 
 // Создание задачи
 router.post('/tasks', isAuthenticated, async (req, res) => {
-  const { title, due_date, priority, tags, description } = req.body;
+  const { title, due_date: bodyDueDate, priority, tags, description } = req.body;
   if (!title) {
     req.session.flash = [{ type: 'danger', message: 'Название задачи обязательно' }];
     return res.redirect('/');
   }
+  const due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
 
   try {
     const task = await Task.create({
@@ -78,7 +93,7 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
       description,
       status: 'in_progress',
       priority: priority || 'medium',
-      due_date: due_date || null
+      due_date
     });
 
     if (tags) {
@@ -92,7 +107,7 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
       }
     }
 
-    req.session.flash = [{ type: 'success', message: 'Задача создана' }];
+    req.session.flash = [{ type: 'success', message: 'Задача создана!' }];
     res.redirect('/');
   } catch (err) {
     console.error('Task creation error:', err);
@@ -101,22 +116,77 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
   }
 });
 
-// API для получения задачи
+// Отметка как завершённая
+router.post('/tasks/:id/complete', isAuthenticated, async (req, res) => {
+  try {
+    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    if (!task) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    task.status = task.status === 'completed' ? 'in_progress' : 'completed';
+    await task.save();
+    res.json({ status: task.status });
+  } catch (err) {
+    console.error('Task complete error:', err);
+    res.status(500).json({ error: 'Ошибка при отметке задачи' });
+  }
+});
+
+// Удаление задачи
+router.post('/tasks/:id/delete', isAuthenticated, async (req, res) => {
+  try {
+    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    if (!task) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    await task.destroy();
+    res.json({ message: 'Задача удалена' });
+  } catch (err) {
+    console.error('Task deletion error:', err);
+    res.status(500).json({ error: 'Ошибка при удалении задачи' });
+  }
+});
+
+// Очистка завершенных задач
+router.post('/tasks/clear-completed', isAuthenticated, async (req, res) => {
+  try {
+    await Task.destroy({
+      where: {
+        user_id: req.session.user.id,
+        status: 'completed'
+      }
+    });
+    res.json({ message: 'Завершенные задачи очищены' });
+  } catch (err) {
+    console.error('Clear completed tasks error:', err);
+    res.status(500).json({ error: 'Ошибка при очистке завершенных задач' });
+  }
+});
+
+// Получение задачи для редактирования
 router.get('/api/task/:id', isAuthenticated, async (req, res) => {
   try {
     const task = await Task.findOne({
       where: { id: req.params.id, user_id: req.session.user.id },
       include: [{ model: Tag, through: { attributes: [] } }]
     });
-    if (!task) return res.status(404).json({ error: 'Задача не найдена' });
+    if (!task) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    // Нормализация due_date: если invalid или '', set null и save
+    let due_date = task.due_date;
+    if (due_date && (typeof due_date !== 'string' || due_date.trim() === '' || isNaN(new Date(due_date).getTime()))) {
+      due_date = null;
+      task.due_date = null;
+      await task.save();
+    }
     res.json({
       id: task.id,
       title: task.title,
-      due_date: task.due_date,
+      due_date,
       priority: task.priority,
-      status: task.status,
-      tags: task.Tags.map(tag => tag.name).join(','),
-      description: task.description
+      description: task.description,
+      tags: task.Tags.map(t => t.name).join(', ')
     });
   } catch (err) {
     console.error('Task fetch error:', err);
@@ -126,27 +196,25 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
 
 // Обновление задачи
 router.post('/api/task/:id', isAuthenticated, async (req, res) => {
+  const { title, due_date: bodyDueDate, priority, tags, description } = req.body;
+  if (!title) {
+    return res.status(400).json({ error: 'Название обязательно' });
+  }
+  const due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
+
   try {
-    const task = await Task.findOne({
-      where: { id: req.params.id, user_id: req.session.user.id }
-    });
+    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
     if (!task) {
       return res.status(404).json({ error: 'Задача не найдена' });
     }
+    await task.update({
+      title,
+      description,
+      priority,
+      due_date
+    });
 
-    const { title, due_date, priority, tags, description } = req.body;
-    if (!title) {
-      return res.status(400).json({ error: 'Название обязательно' });
-    }
-
-    task.title = title;
-    task.description = description;
-    task.priority = priority || 'medium';
-    task.due_date = due_date || null;
-
-    await task.save();
     await task.setTags([]);
-
     if (tags) {
       const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
       for (const tagName of tagNames) {
@@ -165,121 +233,41 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
   }
 });
 
-// Отметить задачу
-router.post('/tasks/:id/complete', isAuthenticated, async (req, res) => {
-  try {
-    const task = await Task.findOne({
-      where: { id: req.params.id, user_id: req.session.user.id }
-    });
-    if (!task) {
-      console.log(`Task not found: ID ${req.params.id}, User ${req.session.user.id}`); // Лог для диагностики
-      return res.status(404).json({ error: 'Задача не найдена' });
-    }
-    task.status = task.status === 'completed' ? 'in_progress' : 'completed';
-    await task.save();
-    const message = task.status === 'completed' ? 'Задача завершена' : 'Задача возвращена в активные';
-    req.session.flash = [{ type: 'success', message }];
-    // Если AJAX (с home), json, иначе redirect
-    if (req.headers['accept'] && req.headers['accept'].includes('json')) {
-      res.json({ message });
-    } else {
-      res.redirect(req.headers.referer || '/weekly');
-    }
-  } catch (err) {
-    console.error('Task completion error:', {
-      message: err.message,
-      stack: err.stack,
-      taskId: req.params.id,
-      userId: req.session.user.id
-    }); // Расширенный лог
-    res.status(500).json({ error: 'Ошибка при отметке задачи: ' + err.message });
-  }
-});
-
-// Удаление задачи
-router.post('/tasks/:id/delete', isAuthenticated, async (req, res) => {
-  try {
-    const task = await Task.findOne({
-      where: { id: req.params.id, user_id: req.session.user.id }
-    });
-    if (!task) {
-      return res.status(404).json({ error: 'Задача не найдена' });
-    }
-    await task.destroy();
-    res.json({ message: 'Задача удалена' });
-  } catch (err) {
-    console.error('Task deletion error:', err);
-    res.status(500).json({ error: 'Ошибка при удалении задачи' });
-  }
-});
-
-// Очистка завершённых задач
-router.post('/tasks/clear-completed', isAuthenticated, async (req, res) => {
-  try {
-    const deleted = await Task.destroy({
-      where: { user_id: req.session.user.id, status: 'completed' }
-    });
-    res.json({ message: 'Завершённые задачи очищены', count: deleted });
-  } catch (err) {
-    console.error('Clear completed tasks error:', {
-      message: err.message,
-      stack: err.stack,
-      userId: req.session.user.id
-    });
-    res.status(500).json({ error: 'Ошибка при очистке завершённых задач: ' + err.message });
-  }
-});
-
 // Создание тэга
 router.post('/tags', isAuthenticated, async (req, res) => {
   const { name } = req.body;
-  if (!name || !name.trim()) {
+  if (!name) {
     return res.status(400).json({ error: 'Название тэга обязательно' });
   }
-  const normalizedName = name.trim().toLowerCase();
   try {
-    const existingTag = await Tag.findOne({ 
-      where: { 
-        user_id: req.session.user.id,
-        name: normalizedName // Проверяем точное совпадение
-      } 
+    const [tag, created] = await Tag.findOrCreate({
+      where: { name: name.toLowerCase(), user_id: req.session.user.id },
+      defaults: { name: name.toLowerCase(), user_id: req.session.user.id }
     });
-    if (existingTag) {
-      return res.status(400).json({ error: 'Тэг с таким именем уже существует' });
+    if (!created) {
+      return res.status(409).json({ error: 'Тэг уже существует' });
     }
-    const tag = await Tag.create({ name: normalizedName, user_id: req.session.user.id });
-    res.json({ message: 'Тэг создан', name: tag.name });
+    res.json({ name: tag.name });
   } catch (err) {
     console.error('Tag creation error:', err);
-    res.status(500).json({ error: 'Ошибка при создании тэга: ' + err.message });
+    res.status(500).json({ error: 'Ошибка при создании тэга' });
   }
 });
 
 // Обновление тэга
-router.put('/tags/:oldName', isAuthenticated, async (req, res) => {
-  const { oldName } = req.params;
-  const { name } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).json({ error: 'Название тэга обязательно' });
+router.put('/tags/:name', isAuthenticated, async (req, res) => {
+  const { name: newName } = req.body;
+  if (!newName) {
+    return res.status(400).json({ error: 'Новое название обязательно' });
   }
-  const normalizedName = name.trim().toLowerCase();
   try {
-    const existingTag = await Tag.findOne({ 
-      where: { 
-        user_id: req.session.user.id,
-        [Op.and]: [Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), normalizedName)]
-      } 
-    });
-    if (existingTag) {
-      return res.status(400).json({ error: 'Тэг с таким именем уже существует (независимо от регистра)' });
-    }
-    const tag = await Tag.findOne({ where: { name: oldName, user_id: req.session.user.id } });
+    const tag = await Tag.findOne({ where: { name: req.params.name, user_id: req.session.user.id } });
     if (!tag) {
       return res.status(404).json({ error: 'Тэг не найден' });
     }
-    tag.name = normalizedName;
+    tag.name = newName.toLowerCase();
     await tag.save();
-    res.json({ message: 'Тэг обновлён', name: tag.name });
+    res.json({ name: tag.name });
   } catch (err) {
     console.error('Tag update error:', err);
     res.status(500).json({ error: 'Ошибка при обновлении тэга' });

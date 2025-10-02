@@ -20,12 +20,16 @@
                 <input type="password" class="form-control" id="password" name="password" required minlength="6">
                 <div class="form-text">Не менее 6 символов</div>
               </div>
+              <div class="mb-3">
+                <label for="confirm_password" class="form-label">Подтверждение пароля</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+              </div>
               <button type="submit" class="btn btn-primary w-100 mb-3">Зарегистрироваться</button>
+              ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
             </form>
             <div class="text-center">
-              <p>Уже есть аккаунт? <a href="/login">Войдите</a></p>
+              <p>Уже есть аккаунт? <a href="/welcome">Войдите</a></p>
             </div>
-            ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
           </div>
         </div>
       </div>

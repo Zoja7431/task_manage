@@ -31,9 +31,16 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
     order: [['due_date', 'ASC']]
   });
 
-  // Обновление статуса просроченных задач
+  // Нормализация due_date и обновление статуса просроченных задач
+  today.setHours(0, 0, 0, 0);
   for (const task of tasks) {
-    if (task.due_date && task.due_date < today.toISOString().split('T')[0] && task.status !== 'completed') {
+    // Нормализация due_date
+    if (task.due_date && (typeof task.due_date !== 'string' || task.due_date.trim() === '' || isNaN(new Date(task.due_date).getTime()))) {
+      task.due_date = null;
+      await task.save();
+    }
+    const dueDate = task.due_date ? new Date(task.due_date) : null;
+    if (dueDate && dueDate < today.toISOString().split('T')[0] && task.status !== 'completed') {
       task.status = 'overdue';
       await task.save();
     }

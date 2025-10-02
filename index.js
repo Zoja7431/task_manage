@@ -57,8 +57,23 @@ app.use(session({
   }
 }));
 
+// Добавлено: Anti-cache middleware для всех responses, чтобы предотвратить кэш после logout
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Middleware для передачи user и flash в шаблоны
 app.use((req, res, next) => {
+  // Fix for logout: clear locals immediately on logout request
+  if (req.method === 'POST' && req.url === '/logout') {
+    res.locals.user = null;
+    res.locals.flash = [];
+    next();
+    return;
+  }
   res.locals.user = req.session.user || null;
   res.locals.flash = req.session.flash || [];
   req.session.flash = [];
@@ -86,13 +101,12 @@ app.get('/api/check-username', async (req, res) => {
   }
 });
 
-
 // Профиль
 app.get('/profile', async (req, res) => {
   if (!req.session.user) {
     logger.info('Profile access denied: No user in session');
     req.session.flash = [{ type: 'danger', message: 'Пожалуйста, войдите' }];
-    return res.redirect('/login');
+    return res.redirect('/welcome');
   }
 
   try {
@@ -101,7 +115,7 @@ app.get('/profile', async (req, res) => {
     if (!user) {
       logger.error('Profile error: User not found', { userId: req.session.user.id });
       req.session.flash = [{ type: 'danger', message: 'Пользователь не найден' }];
-      return res.redirect('/login');
+      return res.redirect('/welcome');
     }
     res.render('profile', { user: { ...user.dataValues, avatar: user.avatar || '#528bff' }, errors: [] });
   } catch (err) {
@@ -142,7 +156,7 @@ app.post('/profile', [
     if (!user) {
       logger.error('Profile update error: User not found', { userId: req.session.user.id });
       req.session.flash = [{ type: 'danger', message: 'Пользователь не найден' }];
-      return res.redirect('/login');
+      return res.redirect('/welcome');
     }
 
     if (password && password.trim().length >= 6 && password === confirm_password) {

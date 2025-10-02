@@ -17,9 +17,14 @@
               </span>
             </div>
             <form method="POST" action="/profile">
-              <div class="mb-3">
+              <div class="mb-3 position-relative">
                 <label for="profileUsername" class="form-label">Имя пользователя</label>
-                <input type="text" class="form-control" id="profileUsername" name="username" value="${user && user.username ? user.username : ''}" required>
+                <div class="d-flex align-items-center">
+                  <input type="text" class="form-control" id="profileUsername" name="username" value="${user && user.username ? user.username : ''}" required>
+                  <span id="username-warning" class="ms-2 text-warning" style="display: none; font-size: 0.875rem; white-space: nowrap;">
+                    <i class="bi bi-exclamation-triangle"></i> Никнейм занят или изменён!
+                  </span>
+                </div>
               </div>
               <div class="mb-3">
                 <label for="profileEmail" class="form-label">Email</label>
@@ -28,11 +33,13 @@
               <div class="mb-3">
                 <label for="profilePassword" class="form-label">Новый пароль</label>
                 <input type="password" class="form-control" id="profilePassword" name="password">
+                <div class="invalid-feedback d-inline ms-2"></div>
                 <div class="form-text">Введите новый пароль, если хотите изменить текущий. Оставьте пустым для сохранения старого.</div>
               </div>
               <div class="mb-3">
                 <label for="profileConfirmPassword" class="form-label">Подтверждение пароля</label>
                 <input type="password" class="form-control" id="profileConfirmPassword" name="confirm_password">
+                <div class="invalid-feedback d-inline ms-2"></div>
                 <div class="form-text">Повторите новый пароль для подтверждения (только если меняете пароль).</div>
               </div>
               <div class="mb-3">

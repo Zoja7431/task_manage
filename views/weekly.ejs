@@ -39,9 +39,10 @@
                   `).join('') : ''}
                 </div>
               </div>
-              <form action="/tasks/${task.id}/complete" method="POST">
-                <button type="submit" class="btn btn-primary btn-sm">Отметить как выполненное</button>
-              </form>
+              <!-- Изменено: AJAX onclick вместо form submit -->
+              <button type="button" class="btn btn-primary btn-sm" onclick="markCompleted('${task.id}', this)">
+                ${task.status === 'completed' ? 'Вернуть в процесс' : 'Отметить как выполненное'}
+              </button>
             </div>
           </div>
         `).join('')}

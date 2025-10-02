@@ -24,7 +24,7 @@
             <form id="createTaskForm" method="POST" action="/tasks">
               <div class="mb-3">
                 <label for="taskTitle" class="form-label">Название</label>
-                <input type="text" class="form-control" id="taskTitle" name="title" required>
+                <input type="text" class="form-control" id="taskTitle" name="title" required autocomplete="off">
               </div>
               <div class="accordion" id="optionalFields">
                 <div class="accordion-item">
@@ -65,7 +65,7 @@
                       <div class="tag-list d-flex flex-wrap gap-2 mb-2" id="taskTagList">
                         ${(typeof tags !== 'undefined' ? tags : []).map(tag => `
                           <div class="tag-wrapper d-flex align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-secondary tag-item" data-value="${tag.name}" ondblclick="editTagInline('${tag.name}', 'taskTagList')">${tag.name}</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary tag-item" data-value="${tag.name}" onclick="toggleTag(event, this, 'taskSelectedTags')" ondblclick="editTagInline('${tag.name}', 'taskTagList')">${tag.name}</button>
                             <button type="button" class="btn btn-sm btn-outline-danger tag-delete d-none" data-value="${tag.name}" onclick="confirmDeleteTag('${tag.name}')"><i class="bi bi-dash-circle"></i></button>
                           </div>
                         `).join('')}
@@ -73,7 +73,7 @@
                       <input type="hidden" id="taskSelectedTags" name="tags">
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newTagModal">+ Добавить тэг</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger toggle-delete-mode" data-target="taskTagList">Удалить тэги</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger toggle-delete-mode" onclick="toggleDeleteMode(this, 'taskTagList')">Удалить тэги</button>
                       </div>
                     </div>
                   </div>
@@ -129,7 +129,7 @@
                   <input type="text" class="form-control tag-search mb-2" id="filterTagSearch" placeholder="Поиск тэга..." onkeyup="filterTags(this, 'filterTagList')" onkeypress="preventSubmit(event)">
                   <div class="tag-list d-flex flex-wrap gap-2 mb-2" id="filterTagList">
                     ${(typeof tags !== 'undefined' ? tags : []).map(tag => `
-                      <button type="button" class="btn btn-sm btn-outline-secondary tag-item ${tagFilter.includes(tag.name) ? 'active' : ''}" data-value="${tag.name}">${tag.name}</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary tag-item ${tagFilter.includes(tag.name) ? 'active' : ''}" data-value="${tag.name}" onclick="toggleTag(event, this, 'filterSelectedTags')">${tag.name}</button>
                     `).join('')}
                   </div>
                   <input type="hidden" id="filterSelectedTags" name="tags" value="${tagFilter.join(',')}">
@@ -157,7 +157,8 @@
                   ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                   <div class="d-flex flex-wrap align-items-center mt-2">
                     <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                    ${task.due_date ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                    ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                    ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                     ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                   </div>
                 </div>
@@ -168,7 +169,7 @@
                   <ul class="dropdown-menu dropdown-menu-dark">
                     <li><a class="dropdown-item" href="#" onclick="openEditModal('${task.id}')">Редактировать</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><form action="/tasks/${task.id}/delete" method="POST"><button class="dropdown-item text-danger" type="submit">Удалить</button></form></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}', this)">Удалить</a></li>
                   </ul>
                 </div>
               </div>
@@ -200,11 +201,12 @@
                     <label for="task-${task.id}"></label>
                   </div>
                   <div class="flex-grow-1">
-                    <h5 class="card-title mb-1 task-title">${task.title}</h5>
+                    <h5 class="card-title mb-1 task-title text-decoration-line-through text-muted">${task.title}</h5>
                     ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                     <div class="d-flex flex-wrap align-items-center mt-2">
                       <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                      ${task.due_date ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                      ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                      ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                       ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                     </div>
                   </div>
@@ -215,7 +217,7 @@
                     <ul class="dropdown-menu dropdown-menu-dark">
                       <li><a class="dropdown-item" href="#" onclick="openEditModal('${task.id}')">Редактировать</a></li>
                       <li><hr class="dropdown-divider"></li>
-                      <li><form action="/tasks/${task.id}/delete" method="POST"><button class="dropdown-item text-danger" type="submit">Удалить</button></form></li>
+                      <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}', this)">Удалить</a></li>
                     </ul>
                   </div>
                 </div>
@@ -257,7 +259,7 @@
                   <div class="tag-list d-flex flex-wrap gap-2 mb-2" id="editTaskTagList">
                     ${(typeof tags !== 'undefined' ? tags : []).map(tag => `
                       <div class="tag-wrapper d-flex align-items-center">
-                        <button type="button" class="btn btn-sm btn-outline-secondary tag-item me-1" data-value="${tag.name}" ondblclick="editTagInline('${tag.name}', 'editTaskTagList')">${tag.name}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary tag-item me-1" data-value="${tag.name}" onclick="toggleTag(event, this, 'editTaskSelectedTags')" ondblclick="editTagInline('${tag.name}', 'editTaskTagList')">${tag.name}</button>
                         <button type="button" class="btn btn-sm btn-outline-danger tag-delete d-none" data-value="${tag.name}" onclick="confirmDeleteTag('${tag.name}')"><i class="bi bi-dash-circle"></i></button>
                       </div>
                     `).join('')}
@@ -265,7 +267,7 @@
                   <input type="hidden" id="editTaskSelectedTags" name="tags">
                   <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newTagModal">+ Добавить тэг</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger toggle-delete-mode" data-target="editTaskTagList">Удалить тэги</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger toggle-delete-mode" onclick="toggleDeleteMode(this, 'editTaskTagList')">Удалить тэги</button>
                   </div>
                 </div>
                 <div class="mb-3">

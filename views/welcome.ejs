@@ -8,19 +8,19 @@
             <h3 class="card-title text-center mb-4">Вход в систему</h3>
             <form method="POST" action="/welcome">
               <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" required>
+                <label for="login" class="form-label">Email или имя пользователя</label>
+                <input type="text" class="form-control" id="login" name="login" required>
               </div>
               <div class="mb-3">
                 <label for="password" class="form-label">Пароль</label>
                 <input type="password" class="form-control" id="password" name="password" required>
               </div>
               <button type="submit" class="btn btn-primary w-100 mb-3">Войти</button>
+              ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
             </form>
             <div class="text-center">
               <p>Нет аккаунта? <a href="/register">Зарегистрируйтесь</a></p>
             </div>
-            ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
           </div>
         </div>
       </div>
