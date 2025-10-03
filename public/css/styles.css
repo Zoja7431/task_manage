@@ -555,3 +555,18 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 .invalid-feedback {
   animation: fadeIn 0.3s ease;
 }
+
+/* Мобильная версия (ширина < 576px) */
+@media (max-width: 576px) {
+  .tag-search {
+    width: 120px; /* Меньшая начальная ширина */
+    max-width: 90%; /* Ограничение ширины */
+    font-size: 0.85rem; /* Меньший шрифт для компактности */
+    padding: 6px; /* Уменьшенные отступы */
+  }
+
+  .tag-search:focus {
+    width: 90%; /* Плавное увеличение, но не на весь экран */
+    max-width: 90%; /* Ограничение максимальной ширины */
+  }
+}
