@@ -241,11 +241,7 @@ sequelize.sync({ force: false }).then(() => {
   console.error('Sequelize sync error:', err);
 });
 
-app.get('/debug/sessions', async (req, res) => {
-  try {
-    const sessions = await sequelize.query('SELECT * FROM Sessions');
-    res.json(sessions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+
+app.get('/debug/db', (req, res) => {
+  res.download(path.join(__dirname, 'db.sqlite'), 'db.sqlite');
 });
