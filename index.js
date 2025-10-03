@@ -14,7 +14,7 @@ const bcrypt = require('bcrypt');
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './db.sqlite',
-  logging: false
+  logging: (msg) => console.log('Sequelize:', msg) // Включаем логирование для отладки
 });
 
 // Подключение моделей
@@ -49,7 +49,7 @@ const sessionStore = new SequelizeStore({
   checkExpirationInterval: 15 * 60 * 1000, // Очистка старых сессий каждые 15 минут
   expiration: 30 * 24 * 60 * 60 * 1000 // Сессия живёт 30 дней
 });
-sequelize.sync({ force: false }); // Синхронизация моделей и таблицы сессий
+sessionStore.sync(); // Синхронизация таблицы сессий
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -60,12 +60,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production' ? true : false,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
-    sameSite: 'strict'
+    sameSite: 'lax', // Изменено с 'strict' на 'lax' для Render
+    httpOnly: true
   }
 }));
 
@@ -83,7 +84,9 @@ app.use((req, res, next) => {
     url: req.url,
     method: req.method,
     sessionID: req.sessionID,
-    user: req.session.user || 'none'
+    user: req.session.user || 'none',
+    cookies: req.cookies,
+    sessionStore: req.session ? 'exists' : 'missing'
   });
   if (req.method === 'POST' && req.url === '/logout') {
     console.log('Processing logout request, clearing user and preserving flash');
@@ -96,7 +99,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || [];
   req.session.flash = [];
   logger.info(`Request: ${req.method} ${req.url} by user ${req.session.user ? req.session.user.username : 'anonymous'}`);
-  if (!req.session.user && req.url === '/') {
+  if (!req.session.user && req.url === '/' && req.method === 'GET') {
     logger.info('Redirecting unauthenticated user to /welcome');
     return res.redirect('/welcome');
   }
