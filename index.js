@@ -75,20 +75,13 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: true, // Для HTTPS на Render
+    secure: process.env.NODE_ENV === 'production', // HTTPS для Render, HTTP для локалки
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'none', // Для кросс-доменных запросов
+    sameSite: 'lax', // Упрощено для совместимости
     httpOnly: true,
-    path: '/',
-    secureProxy: process.env.NODE_ENV === 'production' ? true : false // Для Render
+    path: '/'
   }
 }));
-
-// Добавляем заголовок для поддержки credentials
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  next();
-});
 
 // Anti-cache middleware
 app.use((req, res, next) => {
@@ -223,6 +216,16 @@ app.post('/profile', [
       body: req.body
     });
     res.render('profile', { user: req.session.user, errors: [{ msg: 'Ошибка при обновлении профиля: ' + err.message }] });
+  }
+});
+
+// Debug маршрут для проверки сессий
+app.get('/debug/sessions', async (req, res) => {
+  try {
+    const sessions = await sequelize.query('SELECT * FROM Sessions');
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

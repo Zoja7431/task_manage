@@ -85,15 +85,7 @@ router.post('/login', [
     req.session.user = { id: user.id, username: user.username, email: user.email, avatar: user.avatar || '#528bff' };
     console.log('Login successful, user:', { id: user.id, username: user.username });
     req.session.flash = [{ type: 'success', message: 'Добро пожаловать!' }];
-    req.session.save(err => {
-      if (err) {
-        console.error('Session save error:', err);
-        res.render('login', { errors: [{ msg: 'Ошибка сохранения сессии' }] });
-      } else {
-        console.log('Session saved successfully');
-        res.redirect('/');
-      }
-    });
+    res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
     res.render('login', { errors: [{ msg: 'Ошибка при входе' }] });
@@ -109,7 +101,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none'
+      sameSite: 'lax'
     });
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -137,7 +129,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none'
+      sameSite: 'lax'
     });
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
