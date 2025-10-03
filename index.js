@@ -51,6 +51,18 @@ const sessionStore = new SequelizeStore({
 });
 sessionStore.sync({ force: false }); // Синхронизация таблицы сессий
 
+// Middleware для логирования Set-Cookie
+app.use((req, res, next) => {
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function (name, value) {
+    if (name.toLowerCase() === 'set-cookie') {
+      console.log('Set-Cookie:', value);
+    }
+    originalSetHeader.call(this, name, value);
+  };
+  next();
+});
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -63,11 +75,11 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production' ? true : false,
+    secure: false, // Отключено для теста, включим позже
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
-    sameSite: 'lax',
+    sameSite: 'none', // Для теста, чтобы cookie работали при перенаправлениях
     httpOnly: true,
-    path: '/' // Явно указываем путь
+    path: '/'
   }
 }));
 
@@ -87,7 +99,8 @@ app.use((req, res, next) => {
     sessionID: req.sessionID,
     user: req.session.user || 'none',
     cookies: req.cookies || 'none',
-    sessionStore: req.session ? 'exists' : 'missing'
+    sessionStore: req.session ? 'exists' : 'missing',
+    cookieHeader: req.headers.cookie || 'none'
   });
   if (req.method === 'POST' && req.url === '/logout') {
     console.log('Processing logout request, clearing user and preserving flash');
@@ -226,4 +239,13 @@ sequelize.sync({ force: false }).then(() => {
 }).catch(err => {
   logger.error(`Sequelize sync error: ${err.message}, Stack: ${err.stack}`);
   console.error('Sequelize sync error:', err);
+});
+
+app.get('/debug/sessions', async (req, res) => {
+  try {
+    const sessions = await sequelize.query('SELECT * FROM Sessions');
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
