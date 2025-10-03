@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const winston = require('winston');
@@ -41,6 +42,15 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.l
 const app = express();
 app.use(morgan('combined', { stream: accessLogStream }));
 
+// Настройка сессий с connect-session-sequelize
+const sessionStore = new SequelizeStore({
+  db: sequelize,
+  tableName: 'Sessions',
+  checkExpirationInterval: 15 * 60 * 1000, // Очистка старых сессий каждые 15 минут
+  expiration: 30 * 24 * 60 * 60 * 1000 // Сессия живёт 30 дней
+});
+sequelize.sync({ force: false }); // Синхронизация моделей и таблицы сессий
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -51,9 +61,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
   saveUninitialized: true,
+  store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 дней
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+    sameSite: 'strict'
   }
 }));
 
@@ -67,10 +79,16 @@ app.use((req, res, next) => {
 
 // Middleware для передачи user и flash в шаблоны
 app.use((req, res, next) => {
+  console.log('Session check:', {
+    url: req.url,
+    method: req.method,
+    sessionID: req.sessionID,
+    user: req.session.user || 'none'
+  });
   if (req.method === 'POST' && req.url === '/logout') {
-    console.log('Processing logout request, clearing user and flash');
+    console.log('Processing logout request, clearing user and preserving flash');
     res.locals.user = null;
-    res.locals.flash = [];
+    res.locals.flash = req.session.flash || [];
     next();
     return;
   }
