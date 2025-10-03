@@ -14,7 +14,7 @@ const bcrypt = require('bcrypt');
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './db.sqlite',
-  logging: (msg) => console.log('Sequelize:', msg) // Включаем логирование для отладки
+  logging: (msg) => console.log('Sequelize:', msg)
 });
 
 // Подключение моделей
@@ -47,9 +47,9 @@ const sessionStore = new SequelizeStore({
   db: sequelize,
   tableName: 'Sessions',
   checkExpirationInterval: 15 * 60 * 1000, // Очистка старых сессий каждые 15 минут
-  expiration: 30 * 24 * 60 * 60 * 1000 // Сессия живёт 30 дней
+  expiration: 7 * 24 * 60 * 60 * 1000 // Сессия живёт 7 дней
 });
-sessionStore.sync(); // Синхронизация таблицы сессий
+sessionStore.sync({ force: false }); // Синхронизация таблицы сессий
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -64,9 +64,10 @@ app.use(session({
   store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production' ? true : false,
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
-    sameSite: 'lax', // Изменено с 'strict' на 'lax' для Render
-    httpOnly: true
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+    sameSite: 'lax',
+    httpOnly: true,
+    path: '/' // Явно указываем путь
   }
 }));
 
@@ -85,7 +86,7 @@ app.use((req, res, next) => {
     method: req.method,
     sessionID: req.sessionID,
     user: req.session.user || 'none',
-    cookies: req.cookies,
+    cookies: req.cookies || 'none',
     sessionStore: req.session ? 'exists' : 'missing'
   });
   if (req.method === 'POST' && req.url === '/logout') {
