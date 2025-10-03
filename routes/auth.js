@@ -101,7 +101,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: 'strict'
     });
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -129,7 +129,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: 'strict'
     });
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

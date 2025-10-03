@@ -75,13 +75,19 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS для Render, HTTP для локалки
+    secure: process.env.NODE_ENV === 'production' ? true : false, // HTTPS для Render
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'lax', // Упрощено для совместимости
+    sameSite: 'strict', // Пробуем strict для минимизации блокировок
     httpOnly: true,
     path: '/'
   }
 }));
+
+// Добавляем Vary: Cookie
+app.use((req, res, next) => {
+  res.setHeader('Vary', 'Cookie');
+  next();
+});
 
 // Anti-cache middleware
 app.use((req, res, next) => {
