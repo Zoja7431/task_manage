@@ -29,6 +29,7 @@ router.post('/register', [
   }
 
   const { username, email, password, confirm_password } = req.body;
+  console.log('Register attempt:', { username, email, password: '[hidden]' });
 
   try {
     const existingUser = await User.findOne({ where: { email } });
@@ -41,7 +42,8 @@ router.post('/register', [
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    await User.create({ username, email, password_hash, avatar: '#528bff' });
+    const user = await User.create({ username, email, password_hash, avatar: '#528bff' });
+    console.log('User created:', { id: user.id, username, email });
     req.session.flash = [{ type: 'success', message: 'Регистрация успешна! Пожалуйста, войдите.' }];
     res.redirect('/login');
   } catch (err) {
@@ -84,7 +86,7 @@ router.post('/login', [
 
     req.session.user = { id: user.id, username: user.username, email: user.email, avatar: user.avatar || '#528bff' };
     console.log('Login successful, user:', { id: user.id, username: user.username });
-    req.session.flash = [{ type: 'success', message: 'Добро пожаловать!' }];
+    console.log('Session before redirect:', req.session);
     res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
@@ -100,8 +102,9 @@ router.post('/logout', async (req, res) => {
     console.log('No session found, redirecting to /welcome');
     res.clearCookie('connect.sid', {
       path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: false,
+      sameSite: 'none',
+      domain: 'taskflow-wmgd.onrender.com'
     });
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -128,8 +131,9 @@ router.post('/logout', async (req, res) => {
 
     res.clearCookie('connect.sid', {
       path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: false,
+      sameSite: 'none',
+      domain: 'taskflow-wmgd.onrender.com'
     });
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

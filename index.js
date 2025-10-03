@@ -51,8 +51,9 @@ const sessionStore = new SequelizeStore({
 });
 sessionStore.sync({ force: false });
 
-// Middleware для логирования Set-Cookie
+// Middleware для логирования заголовков и Set-Cookie
 app.use((req, res, next) => {
+  console.log('Raw headers:', req.headers);
   const originalSetHeader = res.setHeader;
   res.setHeader = function (name, value) {
     if (name.toLowerCase() === 'set-cookie') {
@@ -75,11 +76,12 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS для Render
+    secure: false, // Временно отключаем для теста
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'lax', // Вернём lax для простоты
+    sameSite: 'none', // Пробуем none для HTTPS
     httpOnly: true,
-    path: '/'
+    path: '/',
+    domain: 'taskflow-wmgd.onrender.com' // Явно указываем домен
   }
 }));
 
