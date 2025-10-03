@@ -68,6 +68,7 @@ app.use((req, res, next) => {
 // Middleware для передачи user и flash в шаблоны
 app.use((req, res, next) => {
   if (req.method === 'POST' && req.url === '/logout') {
+    console.log('Processing logout request, clearing user and flash');
     res.locals.user = null;
     res.locals.flash = [];
     next();

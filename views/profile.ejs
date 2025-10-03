@@ -47,12 +47,12 @@
                 <input type="color" class="form-control form-control-color" id="profileAvatarColor" name="avatar" value="${user && user.avatar ? user.avatar : '#528bff'}">
               </div>
               <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
-              <div class="text-center">
-                <form method="POST" action="/logout">
-                  <button type="submit" class="btn btn-outline-danger">Выйти</button>
-                </form>
-              </div>
             </form>
+            <div class="text-center mt-3">
+              <form method="POST" action="/logout">
+                <button type="submit" class="btn btn-outline-danger">Выйти</button>
+              </form>
+            </div>
             ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
           </div>
         </div>

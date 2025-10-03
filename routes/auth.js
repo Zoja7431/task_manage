@@ -93,19 +93,66 @@ router.post('/login', [
 });
 
 // Выход
-router.post('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      console.error('Logout error:', err);
-      req.session.flash = [{ type: 'danger', message: 'Ошибка при выходе' }];
-      return res.redirect('/');
-    }
-    res.clearCookie('connect.sid', { path: '/' });
-    res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.header('Pragma', 'no-cache');
-    res.header('Expires', '0');
+router.post('/logout', async (req, res) => {
+  console.log('Handling POST /logout, session:', req.session?.user ? `user=${req.session.user.username}` : 'no session');
+  
+  // Проверяем наличие сессии
+  if (!req.session) {
+    console.log('No session found, redirecting to /welcome');
+    res.clearCookie('connect.sid', {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    req.session.flash = [{ type: 'success', message: 'Вы успешно вышли' }];
+    return res.redirect('/welcome?loggedout=true');
+  }
+
+  try {
+    // Очищаем данные сессии вручную
+    req.session.user = null;
+    req.session.flash = null;
+
+    // Уничтожаем сессию
+    await new Promise((resolve, reject) => {
+      req.session.destroy(err => {
+        if (err) {
+          console.error('Logout error during session destroy:', { error: err.message, stack: err.stack });
+          reject(err);
+        } else {
+          console.log('Session destroyed successfully');
+          resolve();
+        }
+      });
+    });
+
+    // Очищаем cookie
+    res.clearCookie('connect.sid', {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    // Устанавливаем заголовки против кэширования
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Устанавливаем флэш-сообщение
+    req.session.flash = [{ type: 'success', message: 'Вы успешно вышли' }];
+
+    console.log('Redirecting to /welcome?loggedout=true');
     res.redirect('/welcome?loggedout=true');
-  });
+  } catch (err) {
+    console.error('Logout error:', { error: err.message, stack: err.stack });
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.redirect('/welcome?loggedout=true');
+  }
 });
 
 module.exports = router;
