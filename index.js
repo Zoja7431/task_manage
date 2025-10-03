@@ -42,6 +42,9 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.l
 const app = express();
 app.use(morgan('combined', { stream: accessLogStream }));
 
+// Доверять прокси (Cloudflare/Render)
+app.set('trust proxy', 1);
+
 // Настройка сессий с connect-session-sequelize
 const sessionStore = new SequelizeStore({
   db: sequelize,
@@ -76,12 +79,11 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: false, // Временно отключаем для теста
+    secure: true, // HTTPS на Render
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'none', // Пробуем none для HTTPS
+    sameSite: 'none', // Для кросс-доменных запросов
     httpOnly: true,
-    path: '/',
-    domain: 'taskflow-wmgd.onrender.com' // Явно указываем домен
+    path: '/'
   }
 }));
 
