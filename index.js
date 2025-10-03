@@ -75,9 +75,9 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production' ? true : false, // HTTPS для Render
+    secure: process.env.NODE_ENV === 'production', // HTTPS для Render
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'strict', // Пробуем strict для минимизации блокировок
+    sameSite: 'lax', // Вернём lax для простоты
     httpOnly: true,
     path: '/'
   }
@@ -223,6 +223,21 @@ app.post('/profile', [
     });
     res.render('profile', { user: req.session.user, errors: [{ msg: 'Ошибка при обновлении профиля: ' + err.message }] });
   }
+});
+
+// Debug маршрут для проверки пользователей
+app.get('/debug/users', async (req, res) => {
+  try {
+    const users = await models.User.findAll({ attributes: ['id', 'username', 'email'] });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Debug маршрут для скачивания базы
+app.get('/debug/db', (req, res) => {
+  res.download(path.join(__dirname, 'db.sqlite'), 'db.sqlite');
 });
 
 // Debug маршрут для проверки сессий
