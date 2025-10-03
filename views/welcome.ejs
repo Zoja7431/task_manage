@@ -1,29 +1,26 @@
 <% console.log('Rendering welcome.ejs with:', { errors: errors }); %>
 <%- include('base', { 
   body: `
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-body p-5">
-            <h3 class="card-title text-center mb-4">Вход в систему</h3>
-            <form method="POST" action="/welcome">
-              <div class="mb-3">
-                <label for="login" class="form-label">Email или имя пользователя</label>
-                <input type="text" class="form-control" id="login" name="login" required>
-              </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">Пароль</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-              </div>
-              <button type="submit" class="btn btn-primary w-100 mb-3">Войти</button>
-              ${errors && Array.isArray(errors) ? errors.map(error => `<div class="alert alert-danger mt-3">${error.msg}</div>`).join('') : ''}
-            </form>
-            <div class="text-center">
-              <p>Нет аккаунта? <a href="/register">Зарегистрируйтесь</a></p>
-            </div>
-          </div>
-        </div>
+    <div class="welcome-container container my-4 text-center">
+      <h1 class="mb-4 text-light animate__animated animate__fadeIn">TaskFlow</h1>
+      <p class="lead text-light mb-4 animate__animated animate__fadeIn animate__delay-1s">
+        TaskFlow — это минималистичный и удобный таск-менеджер, который помогает организовать ваши задачи, устанавливать приоритеты и отслеживать прогресс. Создавайте задачи, добавляйте теги и планируйте неделю с легкостью!
+      </p>
+      <div class="d-flex justify-content-center gap-3 mb-5 animate__animated animate__fadeIn animate__delay-2s">
+        <a href="/login" class="btn btn-primary px-4">Войти</a>
+        <a href="/register" class="btn btn-outline-primary px-4">Зарегистрироваться</a>
       </div>
     </div>
+    <footer class="footer bg-dark py-4 mt-auto">
+      <div class="container text-center">
+        <p class="text-muted mb-2">Разработано: Олбутова Ксения</p>
+        <p class="text-muted mb-0">
+          Связаться со мной: 
+          <a href="https://t.me/OlbKsenia" target="_blank" class="text-primary text-decoration-none">
+            <i class="bi bi-telegram me-1"></i>@OlbKsenia
+          </a>
+        </p>
+      </div>
+    </footer>
   `
 }) %>

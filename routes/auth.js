@@ -6,6 +6,12 @@ const { User } = models;
 const { Op } = require('sequelize');
 const router = express.Router();
 
+// Главная страница (Welcome)
+router.get('/welcome', (req, res) => {
+  console.log('Handling GET /welcome');
+  res.render('welcome', { errors: [] });
+});
+
 // Регистрация
 router.get('/register', (req, res) => {
   res.render('register', { errors: [] });
@@ -27,7 +33,7 @@ router.post('/register', [
   try {
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.render('register', { errors: [{ msg: 'Email уже занят. <a href="/welcome">Войти?</a>' }] });
+      return res.render('register', { errors: [{ msg: 'Email уже занят. <a href="/login">Войти?</a>' }] });
     }
     const existingUsername = await User.findOne({ where: { username } });
     if (existingUsername) {
@@ -37,7 +43,7 @@ router.post('/register', [
     const password_hash = await bcrypt.hash(password, 10);
     await User.create({ username, email, password_hash, avatar: '#528bff' });
     req.session.flash = [{ type: 'success', message: 'Регистрация успешна! Пожалуйста, войдите.' }];
-    res.redirect('/welcome');
+    res.redirect('/login');
   } catch (err) {
     console.error('Registration error:', err);
     res.render('register', { errors: [{ msg: 'Ошибка при регистрации' }] });
@@ -47,47 +53,42 @@ router.post('/register', [
 // Вход
 router.get('/login', (req, res) => {
   console.log('Handling GET /login');
-  res.render('welcome', { errors: [] });
+  res.render('login', { errors: [] });
 });
 
-router.post('/login', (req, res) => {
-  console.log('Handling POST /login');
-  res.redirect('/welcome');
-});
-
-router.get('/welcome', (req, res) => {
-  console.log('Handling GET /welcome');
-  res.render('welcome', { errors: [] });
-});
-
-router.post('/welcome', [
+router.post('/login', [
   body('login').notEmpty().withMessage('Логин (email или имя пользователя) обязателен'),
   body('password').notEmpty().withMessage('Пароль обязателен')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('welcome', { errors: errors.array() });
+    console.log('Login validation errors:', errors.array());
+    return res.render('login', { errors: errors.array() });
   }
 
   const { login, password } = req.body;
+  console.log('Login attempt:', { login, password: '[hidden]' });
 
   try {
     const user = await User.findOne({ where: { [Op.or]: [{email: login}, {username: login}] } });
     if (!user) {
-      return res.render('welcome', { errors: [{ msg: 'Логин не найден' }] });
+      console.log('Login failed: User not found');
+      return res.render('login', { errors: [{ msg: 'Логин не найден' }] });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.render('welcome', { errors: [{ msg: 'Неверный пароль' }] });
+      console.log('Login failed: Incorrect password');
+      return res.render('login', { errors: [{ msg: 'Неверный пароль' }] });
     }
 
     req.session.user = { id: user.id, username: user.username, email: user.email, avatar: user.avatar || '#528bff' };
+    console.log('Login successful, user:', { id: user.id, username: user.username });
     req.session.flash = [{ type: 'success', message: 'Добро пожаловать!' }];
     res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
-    res.render('welcome', { errors: [{ msg: 'Ошибка при входе' }] });
+    res.render('login', { errors: [{ msg: 'Ошибка при входе' }] });
   }
 });
 
@@ -99,9 +100,7 @@ router.post('/logout', (req, res) => {
       req.session.flash = [{ type: 'danger', message: 'Ошибка при выходе' }];
       return res.redirect('/');
     }
-    // Clear cookie explicitly
     res.clearCookie('connect.sid', { path: '/' });
-    // Добавлено: no-cache headers для предотвращения кэша
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.header('Pragma', 'no-cache');
     res.header('Expires', '0');

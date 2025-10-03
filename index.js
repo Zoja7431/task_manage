@@ -57,7 +57,7 @@ app.use(session({
   }
 }));
 
-// Добавлено: Anti-cache middleware для всех responses, чтобы предотвратить кэш после logout
+// Anti-cache middleware
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
   res.setHeader('Pragma', 'no-cache');
@@ -67,7 +67,6 @@ app.use((req, res, next) => {
 
 // Middleware для передачи user и flash в шаблоны
 app.use((req, res, next) => {
-  // Fix for logout: clear locals immediately on logout request
   if (req.method === 'POST' && req.url === '/logout') {
     res.locals.user = null;
     res.locals.flash = [];
@@ -78,6 +77,10 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || [];
   req.session.flash = [];
   logger.info(`Request: ${req.method} ${req.url} by user ${req.session.user ? req.session.user.username : 'anonymous'}`);
+  if (!req.session.user && req.url === '/') {
+    logger.info('Redirecting unauthenticated user to /welcome');
+    return res.redirect('/welcome');
+  }
   next();
 });
 
@@ -85,7 +88,7 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/auth');
 const homeRoutes = require('./routes/home');
 const weeklyRoutes = require('./routes/weekly');
-app.use('/', authRoutes); // Сначала authRoutes
+app.use('/', authRoutes);
 app.use('/', homeRoutes);
 app.use('/', weeklyRoutes);
 app.get('/api/check-username', async (req, res) => {
@@ -93,7 +96,7 @@ app.get('/api/check-username', async (req, res) => {
   if (!username) return res.json({ available: true });
   try {
     const existing = await models.User.findOne({ 
-      where: { username, id: { [Op.ne]: req.session.user.id } } 
+      where: { username, id: { [Op.ne]: req.session.user?.id || 0 } } 
     });
     res.json({ available: !existing });
   } catch (err) {
