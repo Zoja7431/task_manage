@@ -46,10 +46,10 @@ app.use(morgan('combined', { stream: accessLogStream }));
 const sessionStore = new SequelizeStore({
   db: sequelize,
   tableName: 'Sessions',
-  checkExpirationInterval: 15 * 60 * 1000, // Очистка старых сессий каждые 15 минут
-  expiration: 7 * 24 * 60 * 60 * 1000 // Сессия живёт 7 дней
+  checkExpirationInterval: 15 * 60 * 1000,
+  expiration: 7 * 24 * 60 * 60 * 1000
 });
-sessionStore.sync({ force: false }); // Синхронизация таблицы сессий
+sessionStore.sync({ force: false });
 
 // Middleware для логирования Set-Cookie
 app.use((req, res, next) => {
@@ -75,13 +75,20 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: false, // Отключено для теста, включим позже
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
-    sameSite: 'none', // Для теста, чтобы cookie работали при перенаправлениях
+    secure: true, // Для HTTPS на Render
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: 'none', // Для кросс-доменных запросов
     httpOnly: true,
-    path: '/'
+    path: '/',
+    secureProxy: process.env.NODE_ENV === 'production' ? true : false // Для Render
   }
 }));
+
+// Добавляем заголовок для поддержки credentials
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Anti-cache middleware
 app.use((req, res, next) => {
@@ -239,9 +246,4 @@ sequelize.sync({ force: false }).then(() => {
 }).catch(err => {
   logger.error(`Sequelize sync error: ${err.message}, Stack: ${err.stack}`);
   console.error('Sequelize sync error:', err);
-});
-
-
-app.get('/debug/db', (req, res) => {
-  res.download(path.join(__dirname, 'db.sqlite'), 'db.sqlite');
 });

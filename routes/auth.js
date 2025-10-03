@@ -85,7 +85,15 @@ router.post('/login', [
     req.session.user = { id: user.id, username: user.username, email: user.email, avatar: user.avatar || '#528bff' };
     console.log('Login successful, user:', { id: user.id, username: user.username });
     req.session.flash = [{ type: 'success', message: 'Добро пожаловать!' }];
-    res.redirect('/');
+    req.session.save(err => {
+      if (err) {
+        console.error('Session save error:', err);
+        res.render('login', { errors: [{ msg: 'Ошибка сохранения сессии' }] });
+      } else {
+        console.log('Session saved successfully');
+        res.redirect('/');
+      }
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.render('login', { errors: [{ msg: 'Ошибка при входе' }] });
@@ -96,13 +104,12 @@ router.post('/login', [
 router.post('/logout', async (req, res) => {
   console.log('Handling POST /logout, session:', req.session?.user ? `user=${req.session.user.username}` : 'no session');
   
-  // Проверяем наличие сессии
   if (!req.session) {
     console.log('No session found, redirecting to /welcome');
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'none'
     });
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -112,11 +119,9 @@ router.post('/logout', async (req, res) => {
   }
 
   try {
-    // Очищаем данные сессии вручную
     req.session.user = null;
     req.session.flash = null;
 
-    // Уничтожаем сессию
     await new Promise((resolve, reject) => {
       req.session.destroy(err => {
         if (err) {
@@ -129,21 +134,17 @@ router.post('/logout', async (req, res) => {
       });
     });
 
-    // Очищаем cookie
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'none'
     });
 
-    // Устанавливаем заголовки против кэширования
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
 
-    // Устанавливаем флэш-сообщение
     req.session.flash = [{ type: 'success', message: 'Вы успешно вышли' }];
-
     console.log('Redirecting to /welcome?loggedout=true');
     res.redirect('/welcome?loggedout=true');
   } catch (err) {
