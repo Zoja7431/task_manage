@@ -138,15 +138,6 @@ body {
   color: var(--text-light);
   font-weight: normal;
   border-radius: 4px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: max-width 0.3s ease;
-}
-
-.tag-badge:hover {
-  max-width: 200px;
 }
 
 .welcome-container {
@@ -568,14 +559,15 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 /* Мобильная версия (ширина < 576px) */
 @media (max-width: 576px) {
   .tag-search {
-    width: 120px;
+    width: clamp(80px, 30vw, 120px); /* Динамическая ширина: min 80px, ideal 30vw, max 120px */
     max-width: 90%;
     font-size: 0.85rem;
     padding: 6px;
+    transition: width 0.3s ease; /* Плавное сжатие */
   }
 
   .tag-search:focus {
-    width: 90%;
+    width: clamp(100px, 60vw, 200px); /* Расширение при фокусе */
     max-width: 90%;
   }
 
@@ -583,41 +575,56 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
     font-size: 0.75rem;
     padding: 2px 4px;
     margin-top: 3px;
-    width: 100%;
+    width: clamp(60px, 25vw, 100px); /* Динамическая ширина для кнопок */
     max-width: 100px;
     white-space: normal;
     line-height: 1.2;
     text-align: center;
     word-wrap: break-word;
+    hyphens: auto; /* Автоматический дефисный перенос */
+    text-overflow: ellipsis; /* Обрезка с многоточием */
+    overflow: hidden;
+    transition: max-width 0.3s ease, text-overflow 0.3s ease; /* Плавное сжатие */
+  }
+
+  .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
+    max-width: 150px; /* Расширение при hover/tap */
+    text-overflow: clip; /* Показ полного текста */
+    overflow: visible;
   }
 
   .filter-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Вертикальное расположение */
     gap: 3px;
-    align-items: flex-start;
+    align-items: flex-start; /* Выравнивание слева */
+    justify-content: flex-start; /* Выравнивание сверху */
+    transition: gap 0.3s ease; /* Плавное сжатие зазоров */
   }
 
-  /* Иконка вместо текста "Сортировать по" */
-  .sort-button { /* Предполагаю класс кнопки "Сортировать по" */
-    text-indent: -9999px; /* Скрываем текст */
-    position: relative;
-    width: 40px; /* Ширина для иконки */
-    height: 40px; /* Квадратная форма */
-    padding: 0; /* Без отступов */
-    border-radius: 50%; /* Круглая кнопка */
+  /* Иконка вместо "Сортировать по" (предполагаю класс .sort-label для текста "Сортировать по") */
+  .sort-label {
+    display: none; /* Скрываем текст "Сортировать по" */
+  }
+
+  .sort-button { /* Класс кнопки "Сортировать по" */
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    border-radius: 50%;
     background-color: var(--bg-card);
+    position: relative;
     transition: background-color 0.3s ease;
   }
 
   .sort-button::before {
-    content: '\f5f8'; /* Unicode для bi-sort-down из Bootstrap Icons */
-    font-family: "Bootstrap Icons"; /* Убедитесь, что шрифт подключен */
+    content: '\f5f8'; /* bi-sort-down */
+    font-family: "Bootstrap Icons";
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--text-light);
   }
 
@@ -625,20 +632,6 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
     background-color: var(--primary);
   }
 
-  /* Обрезка длинных слов с многоточием */
-  .btn-outline-secondary, .reset-filter, .show-completed {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: width 0.3s ease, text-overflow 0.3s ease;
-  }
-
-  .btn-outline-secondary:hover, .reset-filter:hover, .show-completed:hover {
-    width: auto; /* Расширение при hover */
-    white-space: normal; /* Показ полного текста */
-    text-overflow: clip; /* Без многоточия */
-  }
-
-  /* Защита от SQL-инъекций (CSS не влияет, но для полноты) */
+  /* Защита от SQL-инъекций (CSS не затрагивает, backend-фикс) */
   /* SQL-инъекции обрабатываются в backend, CSS не затрагивает */
 }
