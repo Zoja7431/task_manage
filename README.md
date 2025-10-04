@@ -26,6 +26,7 @@ task-manager/
 │   ├── register.ejs  
 │   ├── login.ejs  
 │   ├── profile.ejs  
+│   ├── welcome.ejs  
 │   └── weekly.ejs  
 ├── public/               // Статические файлы  
 │   ├── css/  
@@ -37,4 +38,4 @@ task-manager/
 ├── Procfile              // Для Heroku
 └── README.md             // Документация для вуза
 
-**Задеплойено на Netlify:** (https://transcendent-madeleine-55431a.netlify.app)
+**Задеплойено на Render:** (https://taskflow-wmgd.onrender.com)
