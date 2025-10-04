@@ -559,14 +559,29 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 /* Мобильная версия (ширина < 576px) */
 @media (max-width: 576px) {
   .tag-search {
-    width: 120px; /* Меньшая начальная ширина */
-    max-width: 90%; /* Ограничение ширины */
-    font-size: 0.85rem; /* Меньший шрифт для компактности */
-    padding: 6px; /* Уменьшенные отступы */
+    width: 120px;
+    max-width: 90%;
+    font-size: 0.85rem;
+    padding: 6px;
   }
 
   .tag-search:focus {
-    width: 90%; /* Плавное увеличение, но не на весь экран */
-    max-width: 90%; /* Ограничение максимальной ширины */
+    width: 90%;
+    max-width: 90%;
+  }
+
+  .reset-filter, .show-completed {
+    font-size: 0.8rem; /* Меньший шрифт */
+    padding: 3px 6px; /* Уменьшенные отступы */
+    margin-top: 5px; /* Отступ сверху для вертикального расположения */
+    width: 100%; /* Полная ширина для компактности */
+    max-width: 120px; /* Ограничение ширины */
+  }
+
+  .filter-container {
+    display: flex;
+    flex-wrap: wrap; /* Перенос на новую строку */
+    gap: 5px; /* Меньший зазор между элементами */
+    justify-content: flex-start; /* Выравнивание по началу */
   }
 }
