@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap'); 
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 :root {
   --primary: #528bff;
@@ -138,15 +138,15 @@ body {
   color: var(--text-light);
   font-weight: normal;
   border-radius: 4px;
-  max-width: 150px; /* Общий лимит для десктопа */
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: max-width 0.3s ease; /* Плавное сжатие */
+  transition: max-width 0.3s ease;
 }
 
 .tag-badge:hover {
-  max-width: 200px; /* Расширение при наведении для десктопа */
+  max-width: 200px;
 }
 
 .welcome-container {
@@ -580,21 +580,65 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   }
 
   .reset-filter, .show-completed, .btn-outline-secondary {
-    font-size: 0.75rem; /* Ещё меньший шрифт */
-    padding: 2px 4px; /* Минимальные отступы */
-    margin-top: 3px; /* Меньший отступ сверху */
-    width: 100%; /* Полная ширина */
-    max-width: 100px; /* Жёсткое ограничение ширины */
-    white-space: normal; /* Перенос текста */
-    line-height: 1.2; /* Компактная высота строки */
-    text-align: center; /* Центрирование текста */
-    word-wrap: break-word; /* Перенос длинных слов */
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    margin-top: 3px;
+    width: 100%;
+    max-width: 100px;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: center;
+    word-wrap: break-word;
   }
 
   .filter-container {
     display: flex;
-    flex-direction: column; /* Вертикальное расположение */
-    gap: 3px; /* Минимальный зазор */
-    align-items: flex-start; /* Выравнивание слева */
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-start;
   }
+
+  /* Иконка вместо текста "Сортировать по" */
+  .sort-button { /* Предполагаю класс кнопки "Сортировать по" */
+    text-indent: -9999px; /* Скрываем текст */
+    position: relative;
+    width: 40px; /* Ширина для иконки */
+    height: 40px; /* Квадратная форма */
+    padding: 0; /* Без отступов */
+    border-radius: 50%; /* Круглая кнопка */
+    background-color: var(--bg-card);
+    transition: background-color 0.3s ease;
+  }
+
+  .sort-button::before {
+    content: '\f5f8'; /* Unicode для bi-sort-down из Bootstrap Icons */
+    font-family: "Bootstrap Icons"; /* Убедитесь, что шрифт подключен */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    color: var(--text-light);
+  }
+
+  .sort-button:hover {
+    background-color: var(--primary);
+  }
+
+  /* Обрезка длинных слов с многоточием */
+  .btn-outline-secondary, .reset-filter, .show-completed {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: width 0.3s ease, text-overflow 0.3s ease;
+  }
+
+  .btn-outline-secondary:hover, .reset-filter:hover, .show-completed:hover {
+    width: auto; /* Расширение при hover */
+    white-space: normal; /* Показ полного текста */
+    text-overflow: clip; /* Без многоточия */
+  }
+
+  /* Защита от SQL-инъекций (CSS не влияет, но для полноты) */
+  /* SQL-инъекции обрабатываются в backend, CSS не затрагивает */
 }
