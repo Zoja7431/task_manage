@@ -559,26 +559,26 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 /* Мобильная версия (ширина < 576px) */
 @media (max-width: 576px) {
   .tag-search {
-    width: clamp(80px, 30vw, 120px); /* Динамическая ширина: min 80px, ideal 30vw, max 120px */
+    width: clamp(60px, 25vw, 100px); /* Динамическая ширина: min 60px, ideal 25vw, max 100px */
     max-width: 90%;
-    font-size: 0.85rem;
-    padding: 6px;
+    font-size: 0.8rem;
+    padding: 5px;
     transition: width 0.3s ease; /* Плавное сжатие */
   }
 
   .tag-search:focus {
-    width: clamp(100px, 60vw, 200px); /* Расширение при фокусе */
+    width: clamp(100px, 60vw, 180px); /* Расширение при фокусе */
     max-width: 90%;
   }
 
   .reset-filter, .show-completed, .btn-outline-secondary {
-    font-size: 0.75rem;
-    padding: 2px 4px;
-    margin-top: 3px;
-    width: clamp(60px, 25vw, 100px); /* Динамическая ширина для кнопок */
-    max-width: 100px;
+    font-size: 0.7rem;
+    padding: 1px 3px;
+    margin-top: 2px;
+    width: clamp(50px, 20vw, 80px); /* Динамическая ширина */
+    max-width: 80px;
     white-space: normal;
-    line-height: 1.2;
+    line-height: 1.1;
     text-align: center;
     word-wrap: break-word;
     hyphens: auto; /* Автоматический дефисный перенос */
@@ -588,7 +588,7 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   }
 
   .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
-    max-width: 150px; /* Расширение при hover/tap */
+    max-width: 120px; /* Расширение при hover/tap */
     text-overflow: clip; /* Показ полного текста */
     overflow: visible;
   }
@@ -596,30 +596,27 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   .filter-container {
     display: flex;
     flex-direction: column; /* Вертикальное расположение */
-    gap: 3px;
+    gap: 2px; /* Минимальный зазор */
     align-items: flex-start; /* Выравнивание слева */
     justify-content: flex-start; /* Выравнивание сверху */
     transition: gap 0.3s ease; /* Плавное сжатие зазоров */
   }
 
-  /* Иконка вместо "Сортировать по" (предполагаю класс .sort-label для текста "Сортировать по") */
-  .sort-label {
-    display: none; /* Скрываем текст "Сортировать по" */
-  }
-
-  .sort-button { /* Класс кнопки "Сортировать по" */
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    border-radius: 50%;
-    background-color: var(--bg-card);
+  /* Иконка вместо "Сортировать по" (предполагаю класс .sort-button для кнопки "Сортировать по") */
+  .sort-button {
+    text-indent: -9999px; /* Скрываем текст "Сортировать по" */
     position: relative;
+    width: 30px; /* Ширина для иконки */
+    height: 30px; /* Квадратная форма */
+    padding: 0; /* Без отступов */
+    border-radius: 50%; /* Круглая кнопка */
+    background-color: var(--bg-card);
     transition: background-color 0.3s ease;
   }
 
   .sort-button::before {
-    content: '\f5f8'; /* bi-sort-down */
-    font-family: "Bootstrap Icons";
+    content: '\f5f8'; /* Unicode для bi-sort-down из Bootstrap Icons */
+    font-family: "Bootstrap Icons"; /* Убедитесь, что шрифт подключен */
     position: absolute;
     top: 50%;
     left: 50%;
