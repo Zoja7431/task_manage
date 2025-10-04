@@ -572,10 +572,11 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 
   .reset-filter, .show-completed {
     font-size: 0.8rem; /* Меньший шрифт */
-    padding: 3px 6px; /* Уменьшенные отступы */
+    padding: 2px 4px; /* Уменьшенные отступы */
     margin-top: 5px; /* Отступ сверху для вертикального расположения */
     width: 100%; /* Полная ширина для компактности */
-    max-width: 120px; /* Ограничение ширины */
+    max-width: 100px; /* Ограничение ширины */
+    font-size: 0.75rem;
   }
 
   .filter-container {
