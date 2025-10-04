@@ -570,19 +570,22 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
     max-width: 90%;
   }
 
-  .reset-filter, .show-completed {
-    font-size: 0.8rem; /* Меньший шрифт */
-    padding: 2px 4px; /* Уменьшенные отступы */
-    margin-top: 5px; /* Отступ сверху для вертикального расположения */
-    width: 100%; /* Полная ширина для компактности */
-    max-width: 100px; /* Ограничение ширины */
-    font-size: 0.75rem;
+  .reset-filter, .show-completed, .btn-outline-secondary {
+    font-size: 0.75rem; /* Ещё меньший шрифт */
+    padding: 2px 4px; /* Минимальные отступы */
+    margin-top: 3px; /* Меньший отступ сверху */
+    width: 100%; /* Полная ширина */
+    max-width: 100px; /* Жёсткое ограничение ширины */
+    white-space: normal; /* Перенос текста */
+    line-height: 1.2; /* Компактная высота строки */
+    text-align: center; /* Центрирование текста */
+    word-wrap: break-word; /* Перенос длинных слов */
   }
 
   .filter-container {
     display: flex;
-    flex-wrap: wrap; /* Перенос на новую строку */
-    gap: 5px; /* Меньший зазор между элементами */
-    justify-content: flex-start; /* Выравнивание по началу */
+    flex-direction: column; /* Вертикальное расположение */
+    gap: 3px; /* Минимальный зазор */
+    align-items: flex-start; /* Выравнивание по началу */
   }
 }
