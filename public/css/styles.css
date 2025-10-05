@@ -138,15 +138,6 @@ body {
   color: var(--text-light);
   font-weight: normal;
   border-radius: 4px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: max-width 0.3s ease;
-}
-
-.tag-badge:hover {
-  max-width: 200px;
 }
 
 .welcome-container {
@@ -605,7 +596,7 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   .filter-container {
     display: flex;
     flex-direction: column; /* Вертикальное расположение */
-    gap: 2px; /* Минимальный зазор */
+    gap: 2px;
     align-items: flex-start; /* Выравнивание слева */
     justify-content: flex-start; /* Выравнивание сверху */
     transition: gap 0.3s ease; /* Плавное сжатие зазоров */
