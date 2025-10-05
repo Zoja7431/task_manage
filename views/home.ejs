@@ -96,7 +96,7 @@
                   </div>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary mt-3">Добавить задачу</button>
+              <button type="submit" class="btn btn-primary mt-3">Добавить задача</button>
               <button type="button" class="btn btn-secondary mt-3 ms-2" data-bs-toggle="collapse" data-bs-target="#taskForm">Отменить</button>
             </form>
           </div>
@@ -107,10 +107,10 @@
       <div class="card mb-4">
         <div class="card-body py-2">
           <form method="GET" action="/" id="filterForm">
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 filter-container">
               <a href="/" class="btn btn-sm btn-outline-secondary reset-filter" title="Сбросить фильтр"><i class="bi bi-x"></i></a>
-              <span class="text-muted">Сортировать по:</span>
-              <div class="dropdown">
+              <span class="text-muted sort-label">Сортировать по:</span>
+              <div class="dropdown sort-button">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                   ${priorityFilter ? priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1) : 'Приоритеты'}
                 </button>
@@ -135,7 +135,7 @@
                   <input type="hidden" id="filterSelectedTags" name="tags" value="${tagFilter.join(',')}">
                 </div>
               </div>
-              <button type="submit" class="btn btn-sm btn-primary">Применить</button>
+              <button type="submit" class="btn btn-sm btn-primary apply-button">Применить</button>
             </div>
           </form>
         </div>

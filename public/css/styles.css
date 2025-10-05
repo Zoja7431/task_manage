@@ -138,6 +138,15 @@ body {
   color: var(--text-light);
   font-weight: normal;
   border-radius: 4px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: max-width 0.3s ease;
+}
+
+.tag-badge:hover {
+  max-width: 200px;
 }
 
 .welcome-container {
@@ -602,21 +611,24 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
     transition: gap 0.3s ease; /* Плавное сжатие зазоров */
   }
 
-  /* Иконка вместо "Сортировать по" (предполагаю класс .sort-button для кнопки "Сортировать по") */
-  .sort-button {
-    text-indent: -9999px; /* Скрываем текст "Сортировать по" */
-    position: relative;
-    width: 30px; /* Ширина для иконки */
-    height: 30px; /* Квадратная форма */
-    padding: 0; /* Без отступов */
-    border-radius: 50%; /* Круглая кнопка */
+  /* Иконка вместо "Сортировать по" (класс .sort-label для текста "Сортировать по:") */
+  .sort-label {
+    display: none; /* Скрываем текст "Сортировать по" */
+  }
+
+  .sort-button { /* Класс кнопки "Сортировать по" */
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
     background-color: var(--bg-card);
+    position: relative;
     transition: background-color 0.3s ease;
   }
 
   .sort-button::before {
-    content: '\f5f8'; /* Unicode для bi-sort-down из Bootstrap Icons */
-    font-family: "Bootstrap Icons"; /* Убедитесь, что шрифт подключен */
+    content: '\f5f8'; /* bi-sort-down */
+    font-family: "Bootstrap Icons";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -626,6 +638,33 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   }
 
   .sort-button:hover {
+    background-color: var(--primary);
+  }
+
+  /* Иконка вместо "Применить" (класс .apply-button для кнопки "Применить") */
+  .apply-button {
+    text-indent: -9999px; /* Скрываем текст "Применить" */
+    position: relative;
+    width: 30px; /* Ширина для иконки */
+    height: 30px; /* Квадратная форма */
+    padding: 0; /* Без отступов */
+    border-radius: 50%; /* Круглая кнопка */
+    background-color: var(--bg-card);
+    transition: background-color 0.3s ease;
+  }
+
+  .apply-button::before {
+    content: '\f00c'; /* Unicode для bi-check-circle из Bootstrap Icons */
+    font-family: "Bootstrap Icons";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: var(--text-light);
+  }
+
+  .apply-button:hover {
     background-color: var(--primary);
   }
 
