@@ -557,87 +557,39 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 }
 
 @media (max-width: 576px) {
+  .filter-icon {
+    font-size: 1.2rem;
+    padding: 5px;
+    border: none;
+    background-color: transparent;
+  }
+
+  .offcanvas-start {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: left 0.3s ease; /* Slide-in animation */
+  }
+
   .filter-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    align-items: flex-start; /* Слева */
-    justify-content: flex-start; /* Слева */
-  }
-
-  .sort-label, .apply-button, .priority-button {
-    text-indent: -9999px; /* Скрываем текст */
-    position: relative;
-    width: 35px; /* Компактная иконка */
-    height: 35px;
-    padding: 0;
-    border-radius: 50%; /* Круглая */
-    background-color: var(--bg-card);
-    transition: background-color 0.3s ease;
-  }
-
-  .sort-label::before, .apply-button::before, .priority-button::before {
-    content: '\f5f8'; /* bi-sort-down для сортировки */
-    font-family: "Bootstrap Icons";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.1rem;
-    color: var(--text-light);
-  }
-
-  .apply-button::before {
-    content: '\f00c'; /* bi-check for "Применить" */
-  }
-
-  .priority-button::before {
-    content: '\f5e5'; /* bi-bar-chart-line for "Приоритеты" */
-  }
-
-  .sort-label:hover::after, .apply-button:hover::after, .priority-button:hover::after {
-    content: attr(title); /* Tooltip с текстом */
-    position: absolute;
-    top: 120%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--primary);
-    color: var(--text-light);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-  }
-
-  .sort-label::after, .apply-button::after, .priority-button::after {
-    opacity: 0;
-  }
-
-  .sort-label:hover, .apply-button:hover, .priority-button:hover {
-    background-color: var(--primary);
-  }
-
-  .tag-search {
-    width: clamp(80px, 30vw, 120px);
-    max-width: 90%;
-    transition: width 0.3s ease;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
   }
 
   .reset-filter, .show-completed, .btn-outline-secondary {
-    width: clamp(60px, 25vw, 100px);
-    max-width: 100px;
+    width: 100%; /* Полная ширина в sidebar */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     word-break: break-word;
     hyphens: auto;
-    transition: max-width 0.3s ease;
+    transition: width 0.3s ease;
   }
 
   .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
-    max-width: 150px;
+    width: 100%;
     white-space: normal;
     text-overflow: clip;
   }
