@@ -556,109 +556,89 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   animation: fadeIn 0.3s ease;
 }
 
-/* Мобильная версия (ширина < 576px) */
 @media (max-width: 576px) {
-  .tag-search {
-    width: clamp(60px, 25vw, 100px); /* Динамическая ширина: min 60px, ideal 25vw, max 100px */
-    max-width: 90%;
-    font-size: 0.8rem;
-    padding: 5px;
-    transition: width 0.3s ease; /* Плавное сжатие */
-  }
-
-  .tag-search:focus {
-    width: clamp(100px, 60vw, 180px); /* Расширение при фокусе */
-    max-width: 90%;
-  }
-
-  .reset-filter, .show-completed, .btn-outline-secondary {
-    font-size: 0.7rem;
-    padding: 1px 3px;
-    margin-top: 2px;
-    width: clamp(50px, 20vw, 80px); /* Динамическая ширина */
-    max-width: 80px;
-    white-space: normal;
-    line-height: 1.1;
-    text-align: center;
-    word-wrap: break-word;
-    hyphens: auto; /* Автоматический дефисный перенос */
-    text-overflow: ellipsis; /* Обрезка с многоточием */
-    overflow: hidden;
-    transition: max-width 0.3s ease, text-overflow 0.3s ease; /* Плавное сжатие */
-  }
-
-  .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
-    max-width: 120px; /* Расширение при hover/tap */
-    text-overflow: clip; /* Показ полного текста */
-    overflow: visible;
-  }
-
   .filter-container {
     display: flex;
-    flex-direction: column; /* Вертикальное расположение */
-    gap: 2px;
-    align-items: flex-start; /* Выравнивание слева */
-    justify-content: flex-start; /* Выравнивание сверху */
-    transition: gap 0.3s ease; /* Плавное сжатие зазоров */
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: flex-start; /* Слева */
+    justify-content: flex-start; /* Слева */
   }
 
-  /* Иконка вместо "Сортировать по" (класс .sort-label для текста "Сортировать по:") */
-  .sort-label {
-    display: none; /* Скрываем текст "Сортировать по" */
-  }
-
-  .sort-button { /* Класс кнопки "Сортировать по" */
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: 50%;
-    background-color: var(--bg-card);
+  .sort-label, .apply-button, .priority-button {
+    text-indent: -9999px; /* Скрываем текст */
     position: relative;
+    width: 35px; /* Компактная иконка */
+    height: 35px;
+    padding: 0;
+    border-radius: 50%; /* Круглая */
+    background-color: var(--bg-card);
     transition: background-color 0.3s ease;
   }
 
-  .sort-button::before {
-    content: '\f5f8'; /* bi-sort-down */
+  .sort-label::before, .apply-button::before, .priority-button::before {
+    content: '\f5f8'; /* bi-sort-down для сортировки */
     font-family: "Bootstrap Icons";
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: var(--text-light);
-  }
-
-  .sort-button:hover {
-    background-color: var(--primary);
-  }
-
-  /* Иконка вместо "Применить" (класс .apply-button для кнопки "Применить") */
-  .apply-button {
-    text-indent: -9999px; /* Скрываем текст "Применить" */
-    position: relative;
-    width: 30px; /* Ширина для иконки */
-    height: 30px; /* Квадратная форма */
-    padding: 0; /* Без отступов */
-    border-radius: 50%; /* Круглая кнопка */
-    background-color: var(--bg-card);
-    transition: background-color 0.3s ease;
   }
 
   .apply-button::before {
-    content: '\f00c'; /* Unicode для bi-check-circle из Bootstrap Icons */
-    font-family: "Bootstrap Icons";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1rem;
-    color: var(--text-light);
+    content: '\f00c'; /* bi-check for "Применить" */
   }
 
-  .apply-button:hover {
+  .priority-button::before {
+    content: '\f5e5'; /* bi-bar-chart-line for "Приоритеты" */
+  }
+
+  .sort-label:hover::after, .apply-button:hover::after, .priority-button:hover::after {
+    content: attr(title); /* Tooltip с текстом */
+    position: absolute;
+    top: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--primary);
+    color: var(--text-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .sort-label::after, .apply-button::after, .priority-button::after {
+    opacity: 0;
+  }
+
+  .sort-label:hover, .apply-button:hover, .priority-button:hover {
     background-color: var(--primary);
   }
 
-  /* Защита от SQL-инъекций (CSS не затрагивает, backend-фикс) */
-  /* SQL-инъекции обрабатываются в backend, CSS не затрагивает */
+  .tag-search {
+    width: clamp(80px, 30vw, 120px);
+    max-width: 90%;
+    transition: width 0.3s ease;
+  }
+
+  .reset-filter, .show-completed, .btn-outline-secondary {
+    width: clamp(60px, 25vw, 100px);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-word;
+    hyphens: auto;
+    transition: max-width 0.3s ease;
+  }
+
+  .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
+    max-width: 150px;
+    white-space: normal;
+    text-overflow: clip;
+  }
 }
