@@ -96,7 +96,7 @@
                   </div>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary mt-3">Добавить задача</button>
+              <button type="submit" class="btn btn-primary mt-3">Добавить задачу</button>
               <button type="button" class="btn btn-secondary mt-3 ms-2" data-bs-toggle="collapse" data-bs-target="#taskForm">Отменить</button>
             </form>
           </div>
@@ -106,50 +106,38 @@
       <!-- Фильтры -->
       <div class="card mb-4">
         <div class="card-body py-2">
-          <button class="btn btn-sm btn-outline-secondary filter-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterPanel" aria-controls="filterPanel">
-            <i class="bi bi-filter-left"></i>
-          </button>
-
-          <div class="offcanvas offcanvas-start" tabindex="-1" id="filterPanel" aria-labelledby="filterPanelLabel">
-            <div class="offcanvas-header">
-              <h5 class="offcanvas-title" id="filterPanelLabel">Фильтры</h5>
-              <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-              <form method="GET" action="/" id="filterForm">
-                <div class="d-flex align-items-center gap-2 filter-container">
-                  <a href="/" class="btn btn-sm btn-outline-secondary reset-filter" title="Сбросить фильтр"><i class="bi bi-x"></i></a>
-                  <span class="text-muted sort-label">Сортировать по:</span>
-                  <div class="dropdown sort-button">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                      ${priorityFilter ? priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1) : 'Приоритеты'}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-dark">
-                      <li><a class="dropdown-item" href="?priority=">Все</a></li>
-                      <li><a class="dropdown-item" href="?priority=high">Высокий</a></li>
-                      <li><a class="dropdown-item" href="?priority=medium">Средний</a></li>
-                      <li><a class="dropdown-item" href="?priority=low">Низкий</a></li>
-                    </ul>
+          <form method="GET" action="/" id="filterForm">
+            <div class="d-flex align-items-center gap-2">
+              <a href="/" class="btn btn-sm btn-outline-secondary reset-filter" title="Сбросить фильтр"><i class="bi bi-x"></i></a>
+              <span class="text-muted">Сортировать по:</span>
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  ${priorityFilter ? priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1) : 'Приоритеты'}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                  <li><a class="dropdown-item" href="?priority=">Все</a></li>
+                  <li><a class="dropdown-item" href="?priority=high">Высокий</a></li>
+                  <li><a class="dropdown-item" href="?priority=medium">Средний</a></li>
+                  <li><a class="dropdown-item" href="?priority=low">Низкий</a></li>
+                </ul>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  ${tagFilter.length ? tagFilter.join(', ') : 'Теги'}
+                </button>
+                <div class="dropdown-menu dropdown-menu-dark p-3">
+                  <input type="text" class="form-control tag-search mb-2" id="filterTagSearch" placeholder="Поиск тэга..." onkeyup="filterTags(this, 'filterTagList')" onkeypress="preventSubmit(event)">
+                  <div class="tag-list d-flex flex-wrap gap-2 mb-2" id="filterTagList">
+                    ${(typeof tags !== 'undefined' ? tags : []).map(tag => `
+                      <button type="button" class="btn btn-sm btn-outline-secondary tag-item ${tagFilter.includes(tag.name) ? 'active' : ''}" data-value="${tag.name}" onclick="toggleTag(event, this, 'filterSelectedTags')">${tag.name}</button>
+                    `).join('')}
                   </div>
-                  <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                      ${tagFilter.length ? tagFilter.join(', ') : 'Теги'}
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-dark p-3">
-                      <input type="text" class="form-control tag-search mb-2" id="filterTagSearch" placeholder="Поиск тэга..." onkeyup="filterTags(this, 'filterTagList')" onkeypress="preventSubmit(event)">
-                      <div class="tag-list d-flex flex-wrap gap-2 mb-2" id="filterTagList">
-                        ${(typeof tags !== 'undefined' ? tags : []).map(tag => `
-                          <button type="button" class="btn btn-sm btn-outline-secondary tag-item ${tagFilter.includes(tag.name) ? 'active' : ''}" data-value="${tag.name}" onclick="toggleTag(event, this, 'filterSelectedTags')">${tag.name}</button>
-                        `).join('')}
-                      </div>
-                      <input type="hidden" id="filterSelectedTags" name="tags" value="${tagFilter.join(',')}">
-                    </div>
-                  </div>
-                  <button type="submit" class="btn btn-sm btn-primary apply-button">Применить</button>
+                  <input type="hidden" id="filterSelectedTags" name="tags" value="${tagFilter.join(',')}">
                 </div>
-              </form>
+              </div>
+              <button type="submit" class="btn btn-sm btn-primary">Применить</button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 

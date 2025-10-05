@@ -557,40 +557,43 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
 }
 
 @media (max-width: 576px) {
-  .filter-icon {
-    font-size: 1.2rem;
-    padding: 5px;
-    border: none;
-    background-color: transparent;
-  }
-
-  .offcanvas-start {
-    background-color: var(--bg-dark);
-    color: var(--text-light);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    transition: left 0.3s ease; /* Slide-in animation */
-  }
-
   .filter-container {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
+    gap: 5px;
+    align-items: flex-start; /* Слева */
+    overflow-x: auto; /* Горизонтальный scroll */
+    -webkit-overflow-scrolling: touch; /* Плавный scroll на iOS */
+    white-space: nowrap; /* Нет переноса */
+    padding-bottom: 5px; /* Для скроллбара */
+  }
+
+  .tag-search {
+    width: clamp(80px, 30vw, 120px);
+    max-width: 90%;
   }
 
   .reset-filter, .show-completed, .btn-outline-secondary {
-    width: 100%; /* Полная ширина в sidebar */
+    width: clamp(60px, 25vw, 100px);
+    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     word-break: break-word;
     hyphens: auto;
-    transition: width 0.3s ease;
+    transition: max-width 0.3s ease;
   }
 
   .reset-filter:hover, .show-completed:hover, .btn-outline-secondary:hover {
-    width: 100%;
+    max-width: 150px;
     white-space: normal;
     text-overflow: clip;
+  }
+
+  .sort-label, .apply-button {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-word;
+    hyphens: auto;
   }
 }
