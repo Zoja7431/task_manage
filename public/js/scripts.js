@@ -7,17 +7,9 @@ function openEditModal(taskId) {
     .then(task => {
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editTaskTitle').value = task.title;
-      // Fix for date: if no date, set empty string to avoid Invalid Date
-      let dueDateValue = '';
-      if (task.due_date) {
-        try {
-          dueDateValue = new Date(task.due_date).toISOString().slice(0, 16);
-        } catch (e) {
-          console.error('Invalid date in task:', task.due_date);
-          dueDateValue = ''; // Если дата invalid, set empty
-        }
-      }
-      document.getElementById('editTaskDueDate').value = dueDateValue;
+      document.getElementById('editTaskDueDate').value = task.due_date || '';
+      document.getElementById('editTaskDueTime').value = task.due_time || '';
+      document.getElementById('editTaskDueTime').classList.toggle('d-none', !task.due_time);
       document.getElementById('editTaskPriority').value = task.priority;
       document.getElementById('editTaskDescription').value = task.description || '';
       
@@ -27,6 +19,9 @@ function openEditModal(taskId) {
         btn.classList.toggle('active', selectedTags.includes(btn.dataset.value));
       });
       document.getElementById('editTaskSelectedTags').value = task.tags || '';
+
+      const timeButton = document.querySelector(`button[onclick*="editTaskDueDate"]`);
+      timeButton.textContent = task.due_time ? 'Убрать время' : 'Добавить время';
 
       const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
       modal.show();
@@ -41,6 +36,7 @@ function createTask() {
   const formData = {
     title: document.getElementById('taskTitle').value,
     due_date: document.getElementById('taskDueDate').value || null,
+    due_time: document.getElementById('taskDueTime').value || null,
     priority: document.getElementById('taskPriority').value,
     tags: document.getElementById('taskSelectedTags').value,
     description: document.getElementById('taskDescription').value
@@ -50,7 +46,7 @@ function createTask() {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'  // Request JSON response
+      'Accept': 'application/json'
     },
     body: new URLSearchParams(formData).toString()
   })
@@ -70,10 +66,12 @@ function createTask() {
         return;
       }
       if (data && data.id) {
-        // Append new task card using data.id
         const activeTasks = document.getElementById('active-tasks');
         const newCard = document.createElement('div');
         newCard.className = `task-card card mb-3 priority-${formData.priority} new-task`;
+        const dueDateStr = formData.due_date && formData.due_time ? 
+          `${formData.due_date}T${formData.due_time}:00.000Z` : 
+          formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
         newCard.innerHTML = `
           <div class="card-body">
             <div class="d-flex align-items-start">
@@ -86,8 +84,8 @@ function createTask() {
                 ${formData.description ? `<p class="card-text text-muted small">${formData.description}</p>` : ''}
                 <div class="d-flex flex-wrap align-items-center mt-2">
                   <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
-                  ${formData.due_date && formData.due_date !== '' ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(formData.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
-                  ${formData.tags ? formData.tags.split(',').map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>`).join('') : ''}
+                  ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                  ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
                 </div>
               </div>
               <div class="dropdown">
@@ -106,11 +104,12 @@ function createTask() {
         activeTasks.prepend(newCard);
         setTimeout(() => newCard.classList.remove('new-task'), 500);
       } else {
-        // Fallback: reload page if no id (non-AJAX response)
         window.location.reload();
       }
 
       document.getElementById('createTaskForm').reset();
+      document.getElementById('taskDueTime').classList.add('d-none');
+      document.querySelector(`button[onclick*="taskDueDate"]`).textContent = 'Добавить время';
       document.querySelectorAll('#taskTagList .tag-item').forEach(btn => btn.classList.remove('active'));
       document.getElementById('taskSelectedTags').value = '';
       bootstrap.Collapse.getInstance(document.getElementById('taskForm')).hide();
@@ -124,10 +123,12 @@ function createTask() {
 function saveTaskChanges() {
   const taskId = document.getElementById('editTaskId').value;
   let dueDate = document.getElementById('editTaskDueDate').value;
-  if (!dueDate || dueDate === '') dueDate = null;  // Fix: ensure null for empty date
+  const dueTime = document.getElementById('editTaskDueTime').value;
+  if (!dueDate || dueDate === '') dueDate = null;
   const formData = {
     title: document.getElementById('editTaskTitle').value,
     due_date: dueDate,
+    due_time: dueTime || null,
     priority: document.getElementById('editTaskPriority').value,
     tags: document.getElementById('editTaskSelectedTags').value,
     description: document.getElementById('editTaskDescription').value
@@ -147,7 +148,6 @@ function saveTaskChanges() {
         alert(data.error);
         return;
       }
-      // Update the card
       const card = document.querySelector(`#task-${taskId}`).closest('.task-card');
       if (card) {
         card.className = `task-card card mb-3 priority-${formData.priority}`;
@@ -161,9 +161,12 @@ function saveTaskChanges() {
         }
         const badges = card.querySelector('.d-flex.flex-wrap');
         if (badges) {
+          const dueDateStr = formData.due_date && formData.due_time ? 
+            `${formData.due_date}T${formData.due_time}:00.000Z` : 
+            formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
           badges.innerHTML = `
             <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
-            ${formData.due_date && formData.due_date !== '' ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(formData.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+            ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
             ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
           `;
         }
@@ -667,3 +670,23 @@ window.addEventListener('pageshow', (event) => {
     window.location.reload();
   }
 });
+//Показывает или скрывает поле времени
+function toggleTimeInput(dateInputId, timeInputId, warningId) {
+  const dateInput = document.getElementById(dateInputId);
+  const timeInput = document.getElementById(timeInputId);
+  const warning = document.getElementById(warningId);
+  const button = document.querySelector(`button[onclick*="${dateInputId}"]`);
+  
+  if (!dateInput.value) {
+    button.classList.add('error');
+    warning.style.display = 'block';
+    setTimeout(() => {
+      button.classList.remove('error');
+      warning.style.display = 'none';
+    }, 2000);
+    return;
+  }
+  
+  timeInput.classList.toggle('d-none');
+  button.textContent = timeInput.classList.contains('d-none') ? 'Добавить время' : 'Убрать время';
+}

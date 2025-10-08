@@ -34,9 +34,9 @@
                     </button>
                   </h2>
                   <div id="dueDateCollapse" class="accordion-collapse collapse">
-                    <div class="accordion-body">
+                    <div class="mb-3">
                       <label for="taskDueDate" class="form-label">Срок выполнения</label>
-                      <input type="datetime-local" class="form-control date-picker" id="taskDueDate" name="due_date">
+                      <input type="date" class="form-control date-picker" id="taskDueDate" name="due_date">
                       <button type="button" class="btn btn-outline-primary btn-sm mt-2 add-time-btn" onclick="toggleTimeInput('taskDueDate', 'taskDueTime', 'taskTimeWarning')">Добавить время</button>
                       <input type="time" class="form-control date-picker d-none mt-2" id="taskDueTime" name="due_time">
                       <div id="taskTimeWarning" class="invalid-feedback mt-1" style="display: none;">Сначала добавьте дату</div>
@@ -245,12 +245,12 @@
                   <input type="text" class="form-control" id="editTaskTitle" name="title" required>
                 </div>
                 <div class="mb-3">
-                  <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
-                  <input type="date" class="form-control date-picker" id="editTaskDueDate" name="due_date">
-                  <button type="button" class="btn btn-outline-primary btn-sm mt-2 add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
-                  <input type="time" class="form-control date-picker d-none mt-2" id="editTaskDueTime" name="due_time">
-                  <div id="editTaskTimeWarning" class="invalid-feedback mt-1" style="display: none;">Сначала добавьте дату</div>
-                </div>
+                    <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
+                    <input type="date" class="form-control date-picker" id="editTaskDueDate" name="due_date">
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2 add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
+                    <input type="time" class="form-control date-picker d-none mt-2" id="editTaskDueTime" name="due_time">
+                    <div id="editTaskTimeWarning" class="invalid-feedback mt-1" style="display: none;">Сначала добавьте дату</div>
+                  </div>
                 <div class="mb-3">
                   <label for="editTaskPriority" class="form-label">Приоритет</label>
                   <select class="form-select" id="editTaskPriority" name="priority">

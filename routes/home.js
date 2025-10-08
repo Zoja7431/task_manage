@@ -16,15 +16,7 @@ const taskValidation = [
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Описание не должно превышать 1000 символов').escape(),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Недопустимое значение приоритета').escape(),
   body('tags').optional().trim().isLength({ max: 200 }).withMessage('Теги не должны превышать 200 символов').escape(),
-  body('due_date').optional().custom((value, { req }) => {
-    if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      throw new Error('Некорректный формат даты (YYYY-MM-DD)');
-    }
-    if (req.body.due_time && !value) {
-      throw new Error('Дата обязательна, если указано время');
-    }
-    return true;
-  }).escape(),
+  body('due_date').optional().matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Некорректный формат даты (YYYY-MM-DD)').escape(),
   body('due_time').optional().matches(/^\d{2}:\d{2}$/).withMessage('Некорректный формат времени (hh:mm)').escape()
 ];
 
@@ -202,19 +194,26 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Задача не найдена' });
     }
-    let due_date = task.due_date ? task.due_date.toISOString() : null;
-    if (due_date && isNaN(new Date(due_date).getTime())) {
-      due_date = null;
-      task.due_date = null;
-      await task.save();
+    let due_date = task.due_date;
+    let due_time = null;
+    if (due_date) {
+      const dateObj = new Date(due_date);
+      if (isNaN(dateObj.getTime())) {
+        due_date = null;
+        task.due_date = null;
+        await task.save();
+      } else {
+        due_date = dateObj.toISOString().split('T')[0];
+        due_time = task.due_date.includes('T') ? dateObj.toISOString().split('T')[1].slice(0, 5) : null;
+      }
     }
     res.json({
       id: task.id,
       title: task.title,
-      due_date: due_date ? due_date.split('T')[0] : null,
-      due_time: due_date && due_date.includes('T') ? due_date.split('T')[1].slice(0, 5) : null,
+      due_date,
+      due_time,
       priority: task.priority,
-      description: task.description,
+      description: task.description || '',
       tags: task.Tags.map(t => t.name).join(', ')
     });
   } catch (err) {
