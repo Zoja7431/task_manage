@@ -10,12 +10,23 @@ const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 
-// Настройка Sequelize
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: './db.sqlite',
-  logging: (msg) => console.log('Sequelize:', msg)
-});
+// Настройка Sequelize: PostgreSQL на Render, SQLite локально
+const sequelize = process.env.DATABASE_URL 
+  ? new Sequelize(process.env.DATABASE_URL, { 
+      dialect: 'postgres', 
+      logging: (msg) => console.log('Sequelize:', msg),
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false // Для Render PostgreSQL
+        }
+      }
+    })
+  : new Sequelize({
+      dialect: 'sqlite',
+      storage: './db.sqlite',
+      logging: (msg) => console.log('Sequelize:', msg)
+    });
 
 // Подключение моделей
 const models = require('./models')(sequelize);
@@ -237,11 +248,6 @@ app.get('/debug/users', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-// Debug маршрут для скачивания базы
-app.get('/debug/db', (req, res) => {
-  res.download(path.join(__dirname, 'db.sqlite'), 'db.sqlite');
 });
 
 // Debug маршрут для проверки сессий
