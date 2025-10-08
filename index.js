@@ -20,12 +20,6 @@ const sequelize = process.env.DATABASE_URL
           require: true,
           rejectUnauthorized: false // Для Render PostgreSQL
         }
-      },
-      pool: { 
-        max: 5, // Максимум 5 соединений
-        min: 0,
-        acquire: 30000, // Время ожидания подключения
-        idle: 10000 // Время idle до закрытия
       }
     })
   : new Sequelize({
@@ -263,6 +257,17 @@ app.get('/debug/sessions', async (req, res) => {
     res.json(sessions);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Debug маршрут для очистки 'Invalid date'
+app.get('/debug/fix-dates', async (req, res) => {
+  try {
+    await models.Task.update({ due_date: null }, { where: Sequelize.literal('due_date = \'Invalid date\'') });
+    res.json({ message: 'Fixed invalid due_date values' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error fixing due_date: ' + err.message });
   }
 });
 

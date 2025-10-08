@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'medium'
     },
     due_date: {
-      type: DataTypes.DATEONLY
+      type: DataTypes.DATE,
+      allowNull: true
     },
     created_at: {
       type: DataTypes.DATE,

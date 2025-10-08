@@ -648,3 +648,25 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
     height: 28px;
   }
 }
+
+.add-time-btn.error {
+  border: 2px solid var(--priority-high);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.invalid-feedback {
+  color: var(--priority-high);
+  font-size: 0.85rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

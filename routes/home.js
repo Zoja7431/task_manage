@@ -1,5 +1,6 @@
 const express = require('express');
 const { Sequelize, Op } = require('sequelize');
+const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const { sequelize, models } = require('../index');
 const { User, Task, Tag } = models;
@@ -8,6 +9,24 @@ function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
   res.redirect('/welcome');
 }
+
+// Валидация для создания/обновления задачи
+const taskValidation = [
+  body('title').trim().notEmpty().withMessage('Название задачи обязательно').isLength({ max: 100 }).withMessage('Название не должно превышать 100 символов').escape(),
+  body('description').optional().trim().isLength({ max: 1000 }).withMessage('Описание не должно превышать 1000 символов').escape(),
+  body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Недопустимое значение приоритета').escape(),
+  body('tags').optional().trim().isLength({ max: 200 }).withMessage('Теги не должны превышать 200 символов').escape(),
+  body('due_date').optional().custom((value, { req }) => {
+    if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      throw new Error('Некорректный формат даты (YYYY-MM-DD)');
+    }
+    if (req.body.due_time && !value) {
+      throw new Error('Дата обязательна, если указано время');
+    }
+    return true;
+  }).escape(),
+  body('due_time').optional().matches(/^\d{2}:\d{2}$/).withMessage('Некорректный формат времени (hh:mm)').escape()
+];
 
 // Home
 router.get('/', isAuthenticated, async (req, res) => {
@@ -29,12 +48,11 @@ router.get('/', isAuthenticated, async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     for (const task of tasks) {
-      // Нормализация due_date: если invalid, set null
-      const dueDate = task.due_date ? new Date(task.due_date) : null;
-      if (dueDate && isNaN(dueDate.getTime())) {
+      if (task.due_date && isNaN(new Date(task.due_date).getTime())) {
         task.due_date = null;
         await task.save();
       }
+      const dueDate = task.due_date ? new Date(task.due_date) : null;
       let changed = false;
       if (dueDate && dueDate < today && task.status !== 'completed') {
         task.status = 'overdue';
@@ -78,16 +96,23 @@ router.get('/', isAuthenticated, async (req, res) => {
 });
 
 // Создание задачи
-router.post('/tasks', isAuthenticated, async (req, res) => {
-  const { title, due_date: bodyDueDate, priority, tags, description } = req.body;
-  if (!title) {
-    req.session.flash = [{ type: 'danger', message: 'Название задачи обязательно' }];
+router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    req.session.flash = errors.array().map(err => ({ type: 'danger', message: err.msg }));
     return res.redirect('/');
   }
+
+  const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
-  const dueDate = due_date ? new Date(due_date) : null;
-  if (due_date && isNaN(dueDate.getTime())) {
-    due_date = null; // Фикс invalid date
+  if (due_date && due_time) {
+    due_date = `${due_date}T${due_time}:00.000Z`;
+  }
+  if (due_date) {
+    const dueDate = new Date(due_date);
+    if (isNaN(dueDate.getTime())) {
+      due_date = null;
+    }
   }
 
   try {
@@ -115,7 +140,7 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
     res.redirect('/');
   } catch (err) {
     console.error('Task creation error:', err);
-    req.session.flash = [{ type: 'danger', message: 'Ошибка при создании задачи' }];
+    req.session.flash = [{ type: 'danger', message: 'Ошибка при создании задачи: ' + err.message }];
     res.redirect('/');
   }
 });
@@ -177,9 +202,8 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Задача не найдена' });
     }
-    let due_date = task.due_date;
-    const dueDate = task.due_date ? new Date(task.due_date) : null;
-    if (due_date && isNaN(dueDate.getTime())) {
+    let due_date = task.due_date ? task.due_date.toISOString() : null;
+    if (due_date && isNaN(new Date(due_date).getTime())) {
       due_date = null;
       task.due_date = null;
       await task.save();
@@ -187,7 +211,8 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
     res.json({
       id: task.id,
       title: task.title,
-      due_date,
+      due_date: due_date ? due_date.split('T')[0] : null,
+      due_time: due_date && due_date.includes('T') ? due_date.split('T')[1].slice(0, 5) : null,
       priority: task.priority,
       description: task.description,
       tags: task.Tags.map(t => t.name).join(', ')
@@ -199,15 +224,22 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
 });
 
 // Обновление задачи
-router.post('/api/task/:id', isAuthenticated, async (req, res) => {
-  const { title, due_date: bodyDueDate, priority, tags, description } = req.body;
-  if (!title) {
-    return res.status(400).json({ error: 'Название обязательно' });
+router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array().map(err => err.msg).join('; ') });
   }
+
+  const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
-  const dueDate = due_date ? new Date(due_date) : null;
-  if (due_date && isNaN(dueDate.getTime())) {
-    due_date = null; // Фикс invalid date
+  if (due_date && due_time) {
+    due_date = `${due_date}T${due_time}:00.000Z`;
+  }
+  if (due_date) {
+    const dueDate = new Date(due_date);
+    if (isNaN(dueDate.getTime())) {
+      due_date = null;
+    }
   }
 
   try {
@@ -242,11 +274,15 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
 });
 
 // Создание тэга
-router.post('/tags', isAuthenticated, async (req, res) => {
-  const { name } = req.body;
-  if (!name) {
-    return res.status(400).json({ error: 'Название тэга обязательно' });
+router.post('/tags', isAuthenticated, [
+  body('name').trim().notEmpty().withMessage('Название тэга обязательно').isLength({ max: 50 }).withMessage('Название тэга не должно превышать 50 символов').escape()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array().map(err => err.msg).join('; ') });
   }
+
+  const { name } = req.body;
   try {
     const [tag, created] = await Tag.findOrCreate({
       where: { name: name.toLowerCase(), user_id: req.session.user.id },
@@ -263,11 +299,15 @@ router.post('/tags', isAuthenticated, async (req, res) => {
 });
 
 // Обновление тэга
-router.put('/tags/:name', isAuthenticated, async (req, res) => {
-  const { name: newName } = req.body;
-  if (!newName) {
-    return res.status(400).json({ error: 'Новое название обязательно' });
+router.put('/tags/:name', isAuthenticated, [
+  body('name').trim().notEmpty().withMessage('Новое название обязательно').isLength({ max: 50 }).withMessage('Название тэга не должно превышать 50 символов').escape()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array().map(err => err.msg).join('; ') });
   }
+
+  const { name: newName } = req.body;
   try {
     const tag = await Tag.findOne({ where: { name: req.params.name, user_id: req.session.user.id } });
     if (!tag) {
