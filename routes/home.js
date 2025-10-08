@@ -29,12 +29,12 @@ router.get('/', isAuthenticated, async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     for (const task of tasks) {
-      // Нормализация due_date: если invalid или '', set null
-      if (task.due_date && (typeof task.due_date !== 'string' || task.due_date.trim() === '' || isNaN(new Date(task.due_date).getTime()))) {
-        task.due_date = null;
-        await task.save(); // Сохраняем фикс в БД
-      }
+      // Нормализация due_date: если invalid, set null
       const dueDate = task.due_date ? new Date(task.due_date) : null;
+      if (dueDate && isNaN(dueDate.getTime())) {
+        task.due_date = null;
+        await task.save();
+      }
       let changed = false;
       if (dueDate && dueDate < today && task.status !== 'completed') {
         task.status = 'overdue';
@@ -84,7 +84,11 @@ router.post('/tasks', isAuthenticated, async (req, res) => {
     req.session.flash = [{ type: 'danger', message: 'Название задачи обязательно' }];
     return res.redirect('/');
   }
-  const due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
+  let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
+  const dueDate = due_date ? new Date(due_date) : null;
+  if (due_date && isNaN(dueDate.getTime())) {
+    due_date = null; // Фикс invalid date
+  }
 
   try {
     const task = await Task.create({
@@ -173,9 +177,9 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Задача не найдена' });
     }
-    // Нормализация due_date: если invalid или '', set null и save
     let due_date = task.due_date;
-    if (due_date && (typeof due_date !== 'string' || due_date.trim() === '' || isNaN(new Date(due_date).getTime()))) {
+    const dueDate = task.due_date ? new Date(task.due_date) : null;
+    if (due_date && isNaN(dueDate.getTime())) {
       due_date = null;
       task.due_date = null;
       await task.save();
@@ -200,7 +204,11 @@ router.post('/api/task/:id', isAuthenticated, async (req, res) => {
   if (!title) {
     return res.status(400).json({ error: 'Название обязательно' });
   }
-  const due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
+  let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
+  const dueDate = due_date ? new Date(due_date) : null;
+  if (due_date && isNaN(dueDate.getTime())) {
+    due_date = null; // Фикс invalid date
+  }
 
   try {
     const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
