@@ -20,6 +20,12 @@ const sequelize = process.env.DATABASE_URL
           require: true,
           rejectUnauthorized: false // Для Render PostgreSQL
         }
+      },
+      pool: { 
+        max: 5, // Максимум 5 соединений
+        min: 0,
+        acquire: 30000, // Время ожидания подключения
+        idle: 10000 // Время idle до закрытия
       }
     })
   : new Sequelize({
