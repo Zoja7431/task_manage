@@ -68,9 +68,9 @@ function createTask() {
       if (data && data.id) {
         const activeTasks = document.getElementById('active-tasks');
         const newCard = document.createElement('div');
-        newCard.className = `task-card card mb-3 priority-${formData.priority} new-task`;
-        const dueDateStr = formData.due_date ? `${formData.due_date}T${formData.due_time || '00:00'}:00.000Z` : '';
-        const dateFormat = formData.due_time ? 
+        newCard.className = `task-card card mb-3 priority-${data.priority} new-task`;
+        const dueDateStr = data.due_date ? `${data.due_date.split('T')[0]}T${data.due_time || '00:00'}:00.000Z` : '';
+        const dateFormat = data.due_time ? 
           { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
           { day: 'numeric', month: 'short' };
         newCard.innerHTML = `
@@ -81,12 +81,12 @@ function createTask() {
                 <label for="task-${data.id}"></label>
               </div>
               <div class="flex-grow-1">
-                <h5 class="card-title mb-1">${formData.title}</h5>
-                ${formData.description ? `<p class="card-text text-muted small">${formData.description}</p>` : ''}
+                <h5 class="card-title mb-1">${data.title}</h5>
+                ${data.description ? `<p class="card-text text-muted small">${data.description}</p>` : ''}
                 <div class="d-flex flex-wrap align-items-center mt-2">
-                  <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
+                  <span class="badge priority-badge priority-${data.priority} me-2 mb-1">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>
                   ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
-                  ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
+                  ${data.tags ? data.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
                 </div>
               </div>
               <div class="dropdown">

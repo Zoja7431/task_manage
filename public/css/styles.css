@@ -364,7 +364,8 @@ pre {
   background-color: #3a3a3a;
   color: var(--text-light);
   border-color: #4a4a4a;
-  z-index: 1200;
+  z-index: 1500;
+  position: absolute;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -460,6 +461,16 @@ pre {
   padding: 2px 6px;
 }
 
+/* Date and time picker styles */
+.date-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--bg-card);
+  padding: 10px;
+  border-radius: 4px;
+}
+
 input[type="date"].date-picker,
 input[type="time"].date-picker {
   background-color: var(--bg-card);
@@ -469,6 +480,9 @@ input[type="time"].date-picker {
   padding: 8px;
   font-size: 0.9rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 input[type="date"].date-picker:focus,
@@ -480,11 +494,35 @@ input[type="time"].date-picker:focus {
 
 input[type="date"].date-picker::-webkit-calendar-picker-indicator,
 input[type="time"].date-picker::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  background-color: #4a4a4a;
+  background-color: var(--bg-card);
+  filter: invert(1);
   padding: 4px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Override WebKit native date/time picker */
+input[type="date"].date-picker::-webkit-datetime-edit,
+input[type="time"].date-picker::-webkit-datetime-edit {
+  background-color: var(--bg-card);
+  color: var(--text-light);
+}
+
+input[type="date"].date-picker::-webkit-datetime-edit-fields-wrapper,
+input[type="time"].date-picker::-webkit-datetime-edit-fields-wrapper {
+  background-color: var(--bg-card);
+  color: var(--text-light);
+}
+
+input[type="date"].date-picker::-webkit-datetime-edit-text,
+input[type="date"].date-picker::-webkit-datetime-edit-month-field,
+input[type="date"].date-picker::-webkit-datetime-edit-day-field,
+input[type="date"].date-picker::-webkit-datetime-edit-year-field,
+input[type="time"].date-picker::-webkit-datetime-edit-hour-field,
+input[type="time"].date-picker::-webkit-datetime-edit-minute-field,
+input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
+  background-color: var(--bg-card);
+  color: var(--text-light);
 }
 
 .add-time-btn {
@@ -513,42 +551,6 @@ input[type="time"].date-picker::-webkit-calendar-picker-indicator {
   color: var(--priority-high);
   font-size: 0.85rem;
   animation: fadeIn 0.3s ease-in-out;
-}
-
-.date-picker-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background-color: var(--bg-card);
-  padding: 10px;
-  border-radius: 4px;
-}
-
-input[type="date"].date-picker,
-input[type="time"].date-picker {
-  background-color: var(--bg-card);
-  color: var(--text-light);
-  border: 1px solid #4a4a4a;
-  border-radius: 4px;
-  padding: 8px;
-  font-size: 0.9rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-input[type="date"].date-picker:focus,
-input[type="time"].date-picker:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 5px rgba(82, 139, 255, 0.3);
-  outline: none;
-}
-
-input[type="date"].date-picker::-webkit-calendar-picker-indicator,
-input[type="time"].date-picker::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  background-color: transparent;
-  padding: 4px;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 .custom-checkbox {
@@ -611,7 +613,8 @@ input[type="time"].date-picker::-webkit-calendar-picker-indicator {
 }
 
 .task-card {
-  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1000;
 }
 
 .new-task {

@@ -98,9 +98,7 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
-    due_date = due_time && due_time.trim() !== '' 
-      ? new Date(`${bodyDueDate}T${due_time}:00.000Z`) 
-      : new Date(`${bodyDueDate}T00:00:00.000Z`);
+    due_date = new Date(`${bodyDueDate}T${due_time && due_time.trim() !== '' ? due_time : '00:00'}:00.000Z`);
     if (isNaN(due_date.getTime())) {
       due_date = null;
     }
@@ -116,19 +114,7 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
       due_date,
       due_time: due_time && due_time.trim() !== '' ? due_time : null
     });
-
-    if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
-      for (const tagName of tagNames) {
-        let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
-        if (!tag) {
-          tag = await Tag.create({ name: tagName, user_id: req.session.user.id });
-        }
-        await task.addTag(tag);
-      }
-    }
-
-    req.session.flash = [{ type: 'success', message: 'Задача создана!' }];
+    req.session.flash = [{ type: 'success', message: 'Задача успешно создана' }];
     res.redirect('/');
   } catch (err) {
     console.error('Task creation error:', err);
