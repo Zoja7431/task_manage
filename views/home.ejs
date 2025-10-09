@@ -148,7 +148,7 @@
       <div id="active-tasks" class="list-group mb-5">
         ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status !== 'completed').map(task => {
           const dueDate = task.due_date ? new Date(task.due_date) : null;
-          const hasTime = dueDate && (dueDate.getUTCHours() !== 0 || dueDate.getUTCMinutes() !== 0);
+          const dueTime = dueDate ? `${String(dueDate.getUTCHours()).padStart(2, '0')}:${String(dueDate.getUTCMinutes()).padStart(2, '0')}` : null;
           return `
           <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'}">
             <div class="card-body">
@@ -162,7 +162,7 @@
                   ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                   <div class="d-flex flex-wrap align-items-center mt-2">
                     <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                    ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', hasTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
+                    ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', dueTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                     ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                     ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                   </div>
@@ -199,7 +199,7 @@
         <div id="completed-tasks" class="list-group">
           ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status === 'completed').map(task => {
             const dueDate = task.due_date ? new Date(task.due_date) : null;
-            const hasTime = dueDate && (dueDate.getUTCHours() !== 0 || dueDate.getUTCMinutes() !== 0);
+            const dueTime = dueDate ? `${String(dueDate.getUTCHours()).padStart(2, '0')}:${String(dueDate.getUTCMinutes()).padStart(2, '0')}` : null;
             return `
             <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} task-completed">
               <div class="card-body">
@@ -213,7 +213,7 @@
                     ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                     <div class="d-flex flex-wrap align-items-center mt-2">
                       <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                      ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', hasTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
+                      ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', dueTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                       ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                       ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                     </div>

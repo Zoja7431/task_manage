@@ -128,8 +128,22 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
       priority: priority || 'medium',
       due_date
     });
+    let due_time_response = null;
+    if (due_date) {
+      const hours = due_date.getUTCHours();
+      const minutes = due_date.getUTCMinutes();
+      due_time_response = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
     req.session.flash = [{ type: 'success', message: 'Задача успешно создана' }];
-    res.redirect('/');
+    res.json({
+      id: task.id,
+      title,
+      due_date: bodyDueDate,
+      due_time: due_time_response,
+      priority: priority || 'medium',
+      description: description || '',
+      tags: tags || ''
+    });
   } catch (err) {
     console.error('Task creation error:', err);
     req.session.flash = [{ type: 'danger', message: 'Ошибка при создании задачи: ' + err.message }];
@@ -206,9 +220,7 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
         due_date = dateObj.toISOString().split('T')[0];
         const hours = dateObj.getUTCHours();
         const minutes = dateObj.getUTCMinutes();
-        if (hours !== 0 || minutes !== 0) {
-          due_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        }
+        due_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
       }
     }
     res.json({
