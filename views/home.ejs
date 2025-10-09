@@ -146,7 +146,10 @@
       <!-- Список активных задач -->
       <h3 class="mb-3">Активные задачи</h3>
       <div id="active-tasks" class="list-group mb-5">
-        ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status !== 'completed').map(task => `
+        ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status !== 'completed').map(task => {
+          const dueDate = task.due_date ? new Date(task.due_date) : null;
+          const hasTime = dueDate && (dueDate.getUTCHours() !== 0 || dueDate.getUTCMinutes() !== 0);
+          return `
           <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'}">
             <div class="card-body">
               <div class="d-flex align-items-start">
@@ -159,7 +162,7 @@
                   ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                   <div class="d-flex flex-wrap align-items-center mt-2">
                     <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                    ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', new Date(task.due_date).getUTCHours() !== 0 || new Date(task.due_date).getUTCMinutes() !== 0 ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
+                    ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', hasTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                     ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                     ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                   </div>
@@ -177,7 +180,7 @@
               </div>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
 
       <!-- Кнопки для завершённых задач -->
@@ -194,7 +197,10 @@
           Очистить завершённые
         </button>
         <div id="completed-tasks" class="list-group">
-          ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status === 'completed').map(task => `
+          ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status === 'completed').map(task => {
+            const dueDate = task.due_date ? new Date(task.due_date) : null;
+            const hasTime = dueDate && (dueDate.getUTCHours() !== 0 || dueDate.getUTCMinutes() !== 0);
+            return `
             <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} task-completed">
               <div class="card-body">
                 <div class="d-flex align-items-start">
@@ -207,7 +213,7 @@
                     ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                     <div class="d-flex flex-wrap align-items-center mt-2">
                       <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                      ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', new Date(task.due_date).getUTCHours() !== 0 || new Date(task.due_date).getUTCMinutes() !== 0 ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
+                      ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', hasTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                       ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                       ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                     </div>
@@ -225,7 +231,7 @@
                 </div>
               </div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
 

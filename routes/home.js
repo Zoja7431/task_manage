@@ -16,8 +16,21 @@ const taskValidation = [
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Описание не должно превышать 1000 символов').escape(),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Недопустимое значение приоритета').escape(),
   body('tags').optional().trim().isLength({ max: 200 }).withMessage('Теги не должны превышать 200 символов').escape(),
-  body('due_date').optional().matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Некорректный формат даты (YYYY-MM-DD)').escape(),
-  body('due_time').optional().matches(/^\d{2}:\d{2}$/).withMessage('Некорректный формат времени (hh:mm)').escape()
+  body('due_date').optional().trim().custom((value) => {
+    if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      throw new Error('Некорректный формат даты (YYYY-MM-DD)');
+    }
+    return true;
+  }).escape(),
+  body('due_time').optional().trim().custom((value, { req }) => {
+    if (value && !/^\d{2}:\d{2}$/.test(value)) {
+      throw new Error('Некорректный формат времени (hh:mm)');
+    }
+    if (value && !req.body.due_date) {
+      throw new Error('Сначала укажите дату');
+    }
+    return true;
+  }).escape()
 ];
 
 // Home
@@ -98,9 +111,10 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
-    due_date = new Date(`${bodyDueDate}T${due_time && due_time.trim() !== '' ? due_time : '00:00'}:00.000Z`);
+    const time = due_time && due_time.trim() !== '' ? due_time : '00:00';
+    due_date = new Date(`${bodyDueDate}T${time}:00.000Z`);
     if (isNaN(due_date.getTime())) {
-      req.session.flash = [{ type: 'danger', message: 'Некорректная дата' }];
+      req.session.flash = [{ type: 'danger', message: 'Некорректная дата или время' }];
       return res.redirect('/');
     }
   }
@@ -190,7 +204,11 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
         await task.save();
       } else {
         due_date = dateObj.toISOString().split('T')[0];
-        due_time = task.due_date.includes('T') ? dateObj.toISOString().split('T')[1].slice(0, 5) : null;
+        const hours = dateObj.getUTCHours();
+        const minutes = dateObj.getUTCMinutes();
+        if (hours !== 0 || minutes !== 0) {
+          due_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
       }
     }
     res.json({
@@ -218,9 +236,10 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
-    due_date = new Date(`${bodyDueDate}T${due_time && due_time.trim() !== '' ? due_time : '00:00'}:00.000Z`);
+    const time = due_time && due_time.trim() !== '' ? due_time : '00:00';
+    due_date = new Date(`${bodyDueDate}T${time}:00.000Z`);
     if (isNaN(due_date.getTime())) {
-      return res.status(400).json({ error: 'Некорректная дата' });
+      return res.status(400).json({ error: 'Некорректная дата или время' });
     }
   }
 

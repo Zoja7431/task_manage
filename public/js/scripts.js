@@ -7,7 +7,7 @@ function openEditModal(taskId) {
     .then(task => {
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editTaskTitle').value = task.title;
-      document.getElementById('editTaskDueDate').value = task.due_date ? task.due_date.split('T')[0] : '';
+      document.getElementById('editTaskDueDate').value = task.due_date || '';
       document.getElementById('editTaskDueTime').value = task.due_time || '';
       document.getElementById('editTaskDueTime').classList.toggle('d-none', !task.due_time);
       document.getElementById('editTaskPriority').value = task.priority;
@@ -35,8 +35,8 @@ function openEditModal(taskId) {
 function createTask() {
   const formData = {
     title: document.getElementById('taskTitle').value,
-    due_date: document.getElementById('taskDueDate').value || null,
-    due_time: document.getElementById('taskDueTime').value || null,
+    due_date: document.getElementById('taskDueDate').value || '',
+    due_time: document.getElementById('taskDueTime').value || '',
     priority: document.getElementById('taskPriority').value,
     tags: document.getElementById('taskSelectedTags').value,
     description: document.getElementById('taskDescription').value
@@ -69,13 +69,10 @@ function createTask() {
         const activeTasks = document.getElementById('active-tasks');
         const newCard = document.createElement('div');
         newCard.className = `task-card card mb-3 priority-${data.priority} new-task`;
-        let dateFormat = { day: 'numeric', month: 'short' };
-        if (data.due_date) {
-          const dueDate = new Date(data.due_date);
-          if (dueDate.getUTCHours() !== 0 || dueDate.getUTCMinutes() !== 0) {
-            dateFormat = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-          }
-        }
+        const dateFormat = data.due_time ? 
+          { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
+          { day: 'numeric', month: 'short' };
+        const dueDateStr = data.due_date ? `${data.due_date}T${data.due_time || '00:00'}:00.000Z` : '';
         newCard.innerHTML = `
           <div class="card-body">
             <div class="d-flex align-items-start">
@@ -88,7 +85,7 @@ function createTask() {
                 ${data.description ? `<p class="card-text text-muted small">${data.description}</p>` : ''}
                 <div class="d-flex flex-wrap align-items-center mt-2">
                   <span class="badge priority-badge priority-${data.priority} me-2 mb-1">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>
-                  ${data.due_date ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(data.due_date).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
+                  ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
                   ${data.tags ? data.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
                 </div>
               </div>
@@ -128,11 +125,11 @@ function saveTaskChanges() {
   const taskId = document.getElementById('editTaskId').value;
   let dueDate = document.getElementById('editTaskDueDate').value;
   const dueTime = document.getElementById('editTaskDueTime').value;
-  if (!dueDate || dueDate === '') dueDate = null;
+  if (!dueDate || dueDate === '') dueDate = '';
   const formData = {
     title: document.getElementById('editTaskTitle').value,
     due_date: dueDate,
-    due_time: dueTime || null,
+    due_time: dueTime || '',
     priority: document.getElementById('editTaskPriority').value,
     tags: document.getElementById('editTaskSelectedTags').value,
     description: document.getElementById('editTaskDescription').value
@@ -140,8 +137,8 @@ function saveTaskChanges() {
 
   fetch(`/api/task/${taskId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData)
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(formData).toString()
   })
     .then(response => {
       if (!response.ok) throw new Error('Failed to save task');
@@ -165,10 +162,10 @@ function saveTaskChanges() {
         }
         const badges = card.querySelector('.d-flex.flex-wrap');
         if (badges) {
-          const dueDateStr = formData.due_date ? `${formData.due_date}T${formData.due_time || '00:00'}:00.000Z` : '';
           const dateFormat = formData.due_time ? 
             { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
             { day: 'numeric', month: 'short' };
+          const dueDateStr = formData.due_date ? `${formData.due_date}T${formData.due_time || '00:00'}:00.000Z` : '';
           badges.innerHTML = `
             <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
             ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
@@ -230,7 +227,7 @@ function markCompleted(taskId, element) {
               card.classList.add('new-task');
               setTimeout(() => card.classList.remove('new-task'), 500);
             }
-          } else { // Для weekly button
+          } else {
             element.textContent = 'Вернуть в процесс';
           }
         } else {
@@ -248,7 +245,7 @@ function markCompleted(taskId, element) {
               card.classList.add('new-task');
               setTimeout(() => card.classList.remove('new-task'), 500);
             }
-          } else { // Для weekly button
+          } else {
             element.textContent = 'Отметить как выполненное';
           }
         }
@@ -338,7 +335,6 @@ function createTag() {
       updateSelectedTags('taskSelectedTags');
       updateSelectedTags('editTaskSelectedTags');
       newTagInput.value = '';
-      // Hide newTagModal only if not inside editTaskModal (prevent closing parent)
       const newTagModal = bootstrap.Modal.getInstance(document.getElementById('newTagModal'));
       const editModal = bootstrap.Modal.getInstance(document.getElementById('editTaskModal'));
       if (newTagModal && !editModal) {
@@ -483,9 +479,8 @@ function deleteTag() {
   bootstrap.Modal.getInstance(document.getElementById('deleteTagModal')).hide();
 }
 
-// Fix for dropdown: event first to stopPropagation
 function toggleTag(event, button, inputId) {
-  event.stopPropagation(); // Prevent dropdown close
+  event.stopPropagation();
   button.classList.toggle('active');
   updateSelectedTags(inputId);
 }
@@ -576,7 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Добавляем обработчик для submit формы создания задачи
   const createTaskForm = document.getElementById('createTaskForm');
   if (createTaskForm) {
     createTaskForm.addEventListener('submit', (e) => {
@@ -585,7 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Состояние collapse для completed
   const completedCollapse = document.getElementById('completedCollapse');
   const showCompletedBtn = document.querySelector('.show-completed');
   if (completedCollapse && showCompletedBtn) {
@@ -603,7 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Клиентская валидация паролей в профиле
   const passwordInput = document.getElementById('profilePassword');
   const confirmInput = document.getElementById('profileConfirmPassword');
   if (passwordInput && confirmInput) {
@@ -629,12 +621,10 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmInput.addEventListener('input', validatePasswords);
   }
 
-  // Клиентская валидация для формы регистрации
   const registerForm = document.querySelector('form[action="/register"]');
   if (registerForm) {
     const password = registerForm.querySelector('#password');
     const confirm = registerForm.querySelector('#confirm_password');
-    // Добавляем div для ошибок сбоку от полей
     const pError = document.createElement('div');
     pError.className = 'invalid-feedback d-inline ms-2';
     if (password) password.parentNode.appendChild(pError);
@@ -652,30 +642,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirm) confirm.addEventListener('input', validate);
   }
 
-  // Исправление для сброса названия задачи при toggle accordion
   const titleInput = document.getElementById('taskTitle');
   if (titleInput) {
     let savedTitle = '';
     document.querySelectorAll('#optionalFields .accordion-collapse').forEach(collapse => {
       collapse.addEventListener('show.bs.collapse', () => {
         savedTitle = titleInput.value;
-        console.log('Accordion opening, saved title:', savedTitle); // Для отладки
       });
       collapse.addEventListener('shown.bs.collapse', () => {
         titleInput.value = savedTitle;
-        console.log('Accordion opened, restored title:', titleInput.value); // Для отладки
       });
     });
   }
-  
 });
-// Добавлено для предотвращения кэша после logout: Force reload если страница из bfcache (back button)
+
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) {
     window.location.reload();
   }
 });
-//Показывает или скрывает поле времени
+
 function toggleTimeInput(dateInputId, timeInputId, warningId) {
   const dateInput = document.getElementById(dateInputId);
   const timeInput = document.getElementById(timeInputId);
