@@ -97,14 +97,13 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
 
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
-  if (due_date && due_time) {
-    due_date = `${due_date}T${due_time}:00.000Z`;
-  }
-  if (due_date) {
-    const dueDate = new Date(due_date);
-    if (isNaN(dueDate.getTime())) {
-      due_date = null;
+  if (due_date && due_time && due_time.trim() !== '') {
+    due_date = new Date(`${due_date}T${due_time}:00.000Z`);
+    if (isNaN(due_date.getTime())) {
+      due_date = new Date(`${bodyDueDate}T00:00:00.000Z`);
     }
+  } else if (due_date) {
+    due_date = new Date(`${due_date}T00:00:00.000Z`);
   }
 
   try {
@@ -114,7 +113,7 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
       description,
       status: 'in_progress',
       priority: priority || 'medium',
-      due_date
+      due_date: due_date ? new Date(due_date) : null
     });
 
     if (tags) {
@@ -231,14 +230,13 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
 
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = bodyDueDate && bodyDueDate.trim() !== '' ? bodyDueDate : null;
-  if (due_date && due_time) {
-    due_date = `${due_date}T${due_time}:00.000Z`;
-  }
-  if (due_date) {
-    const dueDate = new Date(due_date);
-    if (isNaN(dueDate.getTime())) {
-      due_date = null;
+  if (due_date && due_time && due_time.trim() !== '') {
+    due_date = new Date(`${due_date}T${due_time}:00.000Z`);
+    if (isNaN(due_date.getTime())) {
+      due_date = new Date(`${bodyDueDate}T00:00:00.000Z`);
     }
+  } else if (due_date) {
+    due_date = new Date(`${due_date}T00:00:00.000Z`);
   }
 
   try {
@@ -266,7 +264,7 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
     }
 
     res.json({ message: 'Задача обновлена' });
-  } catch (err) {
+    } catch (err) {
     console.error('Task update error:', err);
     res.status(500).json({ error: 'Ошибка при обновлении задачи' });
   }

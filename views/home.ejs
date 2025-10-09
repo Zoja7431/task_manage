@@ -34,12 +34,12 @@
                     </button>
                   </h2>
                   <div id="dueDateCollapse" class="accordion-collapse collapse">
-                    <div class="mb-3">
+                    <div class="mb-3 date-picker-container">
                       <label for="taskDueDate" class="form-label">Срок выполнения</label>
                       <input type="date" class="form-control date-picker" id="taskDueDate" name="due_date">
-                      <button type="button" class="btn btn-outline-primary btn-sm mt-2 add-time-btn" onclick="toggleTimeInput('taskDueDate', 'taskDueTime', 'taskTimeWarning')">Добавить время</button>
-                      <input type="time" class="form-control date-picker d-none mt-2" id="taskDueTime" name="due_time">
-                      <div id="taskTimeWarning" class="invalid-feedback mt-1" style="display: none;">Сначала добавьте дату</div>
+                      <button type="button" class="add-time-btn" onclick="toggleTimeInput('taskDueDate', 'taskDueTime', 'taskTimeWarning')">Добавить время</button>
+                      <input type="time" class="form-control date-picker d-none" id="taskDueTime" name="due_time">
+                      <div id="taskTimeWarning" class="invalid-feedback" style="display: none;">Сначала добавьте дату</div>
                     </div>
                   </div>
                 </div>
@@ -159,7 +159,7 @@
                   ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                   <div class="d-flex flex-wrap align-items-center mt-2">
                     <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                    ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                    ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', task.due_date.includes('T') && !task.due_date.includes('00:00:00.000Z') ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                     ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                     ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                   </div>
@@ -207,7 +207,7 @@
                     ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                     <div class="d-flex flex-wrap align-items-center mt-2">
                       <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                      ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                      ${task.due_date && task.due_date !== '' ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${new Date(task.due_date).toLocaleString('ru-RU', task.due_date.includes('T') && !task.due_date.includes('00:00:00.000Z') ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                       ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                       ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                     </div>
@@ -244,13 +244,13 @@
                   <label for="editTaskTitle" class="form-label">Название</label>
                   <input type="text" class="form-control" id="editTaskTitle" name="title" required>
                 </div>
-                <div class="mb-3">
-                    <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
-                    <input type="date" class="form-control date-picker" id="editTaskDueDate" name="due_date">
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-2 add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
-                    <input type="time" class="form-control date-picker d-none mt-2" id="editTaskDueTime" name="due_time">
-                    <div id="editTaskTimeWarning" class="invalid-feedback mt-1" style="display: none;">Сначала добавьте дату</div>
-                  </div>
+                <div class="mb-3 date-picker-container">
+                  <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
+                  <input type="date" class="form-control date-picker" id="editTaskDueDate" name="due_date">
+                  <button type="button" class="add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
+                  <input type="time" class="form-control date-picker d-none" id="editTaskDueTime" name="due_time">
+                  <div id="editTaskTimeWarning" class="invalid-feedback" style="display: none;">Сначала добавьте дату</div>
+                </div>
                 <div class="mb-3">
                   <label for="editTaskPriority" class="form-label">Приоритет</label>
                   <select class="form-select" id="editTaskPriority" name="priority">

@@ -364,7 +364,8 @@ pre {
   background-color: #3a3a3a;
   color: var(--text-light);
   border-color: #4a4a4a;
-  z-index: 1050;
+  z-index: 1100;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dropdown-item {
@@ -452,6 +453,67 @@ pre {
 .btn-outline-danger {
   font-size: 0.8rem;
   padding: 2px 6px;
+}
+
+input[type="date"].date-picker,
+input[type="time"].date-picker {
+  background-color: var(--bg-card);
+  color: var(--text-light);
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="date"].date-picker:focus,
+input[type="time"].date-picker:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 5px rgba(82, 139, 255, 0.3);
+  outline: none;
+}
+
+input[type="date"].date-picker::-webkit-calendar-picker-indicator,
+input[type="time"].date-picker::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  background-color: #4a4a4a;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-time-btn {
+  align-self: flex-start;
+  background-color: #3a3a3a;
+  color: var(--text-light);
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.add-time-btn:hover {
+  background-color: #4a4a4a;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.add-time-btn.error {
+  border-color: var(--priority-high);
+  animation: shake 0.5s ease-in-out;
+}
+
+.invalid-feedback {
+  color: var(--priority-high);
+  font-size: 0.85rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.date-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 input[type="datetime-local"].date-picker {
@@ -649,10 +711,6 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   }
 }
 
-.add-time-btn.error {
-  border: 2px solid var(--priority-high);
-  animation: shake 0.5s ease-in-out;
-}
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -660,11 +718,6 @@ input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
-.invalid-feedback {
-  color: var(--priority-high);
-  font-size: 0.85rem;
-  animation: fadeIn 0.3s ease-in-out;
-}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }

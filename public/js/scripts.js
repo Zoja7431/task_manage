@@ -72,6 +72,9 @@ function createTask() {
         const dueDateStr = formData.due_date && formData.due_time ? 
           `${formData.due_date}T${formData.due_time}:00.000Z` : 
           formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
+        const dateFormat = formData.due_time ? 
+          { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
+          { day: 'numeric', month: 'short' };
         newCard.innerHTML = `
           <div class="card-body">
             <div class="d-flex align-items-start">
@@ -84,7 +87,7 @@ function createTask() {
                 ${formData.description ? `<p class="card-text text-muted small">${formData.description}</p>` : ''}
                 <div class="d-flex flex-wrap align-items-center mt-2">
                   <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
-                  ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+                  ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
                   ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
                 </div>
               </div>
@@ -164,9 +167,12 @@ function saveTaskChanges() {
           const dueDateStr = formData.due_date && formData.due_time ? 
             `${formData.due_date}T${formData.due_time}:00.000Z` : 
             formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
+          const dateFormat = formData.due_time ? 
+            { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
+            { day: 'numeric', month: 'short' };
           badges.innerHTML = `
             <span class="badge priority-badge priority-${formData.priority} me-2 mb-1">${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
-            ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+            ${dueDateStr ? `<span class="badge date-badge me-2 mb-1"><i class="bi bi-calendar me-1"></i>${new Date(dueDateStr).toLocaleString('ru-RU', dateFormat)}</span>` : ''}
             ${formData.tags ? formData.tags.split(',').map(tag => tag.trim() ? `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>` : '').join('') : ''}
           `;
         }
