@@ -364,8 +364,13 @@ pre {
   background-color: #3a3a3a;
   color: var(--text-light);
   border-color: #4a4a4a;
-  z-index: 1100;
+  z-index: 1200;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown {
+  position: relative;
+  z-index: 1100;
 }
 
 .dropdown-item {
@@ -514,29 +519,36 @@ input[type="time"].date-picker::-webkit-calendar-picker-indicator {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-input[type="datetime-local"].date-picker {
-  background-color: #3a3a3a;
-  color: var(--text-light);
-  border-color: #4a4a4a;
+  background-color: var(--bg-card);
+  padding: 10px;
   border-radius: 4px;
-  padding: 6px;
-  background-image: linear-gradient(45deg, var(--primary), var(--secondary));
-  background-size: 200% 100%;
-  background-position: left bottom;
-  transition: background-position 0.3s ease;
 }
 
-input[type="datetime-local"].date-picker:focus {
-  background-position: right bottom;
+input[type="date"].date-picker,
+input[type="time"].date-picker {
+  background-color: var(--bg-card);
+  color: var(--text-light);
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-input[type="datetime-local"].date-picker::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  background-color: #4a4a4a;
+input[type="date"].date-picker:focus,
+input[type="time"].date-picker:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 5px rgba(82, 139, 255, 0.3);
+  outline: none;
+}
+
+input[type="date"].date-picker::-webkit-calendar-picker-indicator,
+input[type="time"].date-picker::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  background-color: transparent;
   padding: 4px;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .custom-checkbox {

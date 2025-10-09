@@ -7,7 +7,7 @@ function openEditModal(taskId) {
     .then(task => {
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editTaskTitle').value = task.title;
-      document.getElementById('editTaskDueDate').value = task.due_date || '';
+      document.getElementById('editTaskDueDate').value = task.due_date ? task.due_date.split('T')[0] : '';
       document.getElementById('editTaskDueTime').value = task.due_time || '';
       document.getElementById('editTaskDueTime').classList.toggle('d-none', !task.due_time);
       document.getElementById('editTaskPriority').value = task.priority;
@@ -69,9 +69,7 @@ function createTask() {
         const activeTasks = document.getElementById('active-tasks');
         const newCard = document.createElement('div');
         newCard.className = `task-card card mb-3 priority-${formData.priority} new-task`;
-        const dueDateStr = formData.due_date && formData.due_time ? 
-          `${formData.due_date}T${formData.due_time}:00.000Z` : 
-          formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
+        const dueDateStr = formData.due_date ? `${formData.due_date}T${formData.due_time || '00:00'}:00.000Z` : '';
         const dateFormat = formData.due_time ? 
           { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
           { day: 'numeric', month: 'short' };
@@ -164,9 +162,7 @@ function saveTaskChanges() {
         }
         const badges = card.querySelector('.d-flex.flex-wrap');
         if (badges) {
-          const dueDateStr = formData.due_date && formData.due_time ? 
-            `${formData.due_date}T${formData.due_time}:00.000Z` : 
-            formData.due_date ? `${formData.due_date}T00:00:00.000Z` : '';
+          const dueDateStr = formData.due_date ? `${formData.due_date}T${formData.due_time || '00:00'}:00.000Z` : '';
           const dateFormat = formData.due_time ? 
             { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : 
             { day: 'numeric', month: 'short' };
