@@ -100,7 +100,8 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
   if (bodyDueDate && bodyDueDate.trim() !== '') {
     due_date = new Date(`${bodyDueDate}T${due_time && due_time.trim() !== '' ? due_time : '00:00'}:00.000Z`);
     if (isNaN(due_date.getTime())) {
-      due_date = null;
+      req.session.flash = [{ type: 'danger', message: 'Некорректная дата' }];
+      return res.redirect('/');
     }
   }
 
@@ -111,8 +112,7 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
       description,
       status: 'in_progress',
       priority: priority || 'medium',
-      due_date,
-      due_time: due_time && due_time.trim() !== '' ? due_time : null
+      due_date
     });
     req.session.flash = [{ type: 'success', message: 'Задача успешно создана' }];
     res.redirect('/');
@@ -218,11 +218,9 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
-    due_date = due_time && due_time.trim() !== '' 
-      ? new Date(`${bodyDueDate}T${due_time}:00.000Z`) 
-      : new Date(`${bodyDueDate}T00:00:00.000Z`);
+    due_date = new Date(`${bodyDueDate}T${due_time && due_time.trim() !== '' ? due_time : '00:00'}:00.000Z`);
     if (isNaN(due_date.getTime())) {
-      due_date = null;
+      return res.status(400).json({ error: 'Некорректная дата' });
     }
   }
 
@@ -235,28 +233,15 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
       title,
       description,
       priority: priority || 'medium',
-      due_date,
-      due_time: due_time && due_time.trim() !== '' ? due_time : null
+      due_date
     });
-
-    await task.setTags([]);
-    if (tags) {
-      const tagNames = tags.split(',').map(t => t.trim()).filter(t => t);
-      for (const tagName of tagNames) {
-        let tag = await Tag.findOne({ where: { name: tagName, user_id: req.session.user.id } });
-        if (!tag) {
-          tag = await Tag.create({ name: tagName, user_id: req.session.user.id });
-        }
-        await task.addTag(tag);
-      }
-    }
-
-    res.json({ message: 'Задача обновлена' });
+    res.json({ success: true });
   } catch (err) {
     console.error('Task update error:', err);
     res.status(500).json({ error: 'Ошибка при обновлении задачи' });
   }
 });
+
 // Создание тэга
 router.post('/tags', isAuthenticated, [
   body('name').trim().notEmpty().withMessage('Название тэга обязательно').isLength({ max: 50 }).withMessage('Название тэга не должно превышать 50 символов').escape()
