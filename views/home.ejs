@@ -29,9 +29,10 @@
               <div class="accordion" id="optionalFields">
                 <div class="accordion-item">
                   <h2 class="accordion-header">
-                    <button class="accordion-button collapsed add-optional" type="button" data-bs-toggle="collapse" data-bs-target="#dueDateCollapse">
-                      <i class="bi bi-calendar-event me-2"></i> Добавить дату
-                    </button>
+                  <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#dueDateCollapse">
+                    <span>Добавить дату</span>
+                    <i class="bi bi-calendar-event"></i>
+                  </button>
                   </h2>
                   <div id="dueDateCollapse" class="accordion-collapse collapse">
                     <div class="mb-3 date-picker-container">
@@ -51,9 +52,10 @@
                 </div>
                 <div class="accordion-item">
                   <h2 class="accordion-header">
-                    <button class="accordion-button collapsed add-optional" type="button" data-bs-toggle="collapse" data-bs-target="#descriptionCollapse">
-                      Добавить описание
-                    </button>
+                  <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#descriptionCollapse">
+                    <span>Добавить описание</span>
+                    <i class="bi bi-card-text"></i>
+                  </button>
                   </h2>
                   <div id="descriptionCollapse" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -64,9 +66,10 @@
                 </div>
                 <div class="accordion-item">
                   <h2 class="accordion-header">
-                    <button class="accordion-button collapsed add-optional" type="button" data-bs-toggle="collapse" data-bs-target="#tagsCollapse">
-                      Добавить теги
-                    </button>
+                  <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#tagsCollapse">
+                    <span>Добавить теги</span>
+                    <i class="bi bi-tags"></i>
+                  </button>
                   </h2>
                   <div id="tagsCollapse" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -89,9 +92,10 @@
                 </div>
                 <div class="accordion-item">
                   <h2 class="accordion-header">
-                    <button class="accordion-button collapsed add-optional" type="button" data-bs-toggle="collapse" data-bs-target="#priorityCollapse">
-                      Добавить приоритет
-                    </button>
+                  <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#priorityCollapse">
+                    <span>Добавить приоритет</span>
+                    <i class="bi bi-exclamation-diamond"></i>
+                  </button>
                   </h2>
                   <div id="priorityCollapse" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -221,7 +225,7 @@
                     ${task.description ? `<p class="card-text text-muted small">${task.description}</p>` : ''}
                     <div class="d-flex flex-wrap align-items-center mt-2">
                       <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                      ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', showTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
+                    ${dueDate ? `<span class="badge date-badge me-2 mb-1 ${task.status === 'overdue' ? 'overdue' : ''}"><i class="bi bi-calendar me-1"></i>${dueDate.toLocaleString('ru-RU', showTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })}</span>` : ''}
                       ${task.status === 'overdue' ? `<span class="badge bg-danger me-2 mb-1">Просрочена</span>` : ''}
                       ${(task.Tags || []).map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.name}</span>`).join('')}
                     </div>

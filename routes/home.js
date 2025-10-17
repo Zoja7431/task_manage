@@ -114,7 +114,8 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
     const time = due_time && due_time.trim() !== '' ? due_time : '00:00';
-    due_date = new Date(`${bodyDueDate}T${time}:00.000Z`);
+    // use local time instead of forcing Z (UTC)
+    due_date = new Date(`${bodyDueDate}T${time}:00`);
     if (isNaN(due_date.getTime())) {
       req.session.flash = [{ type: 'danger', message: 'Некорректная дата или время' }];
       return res.redirect('/');
@@ -132,8 +133,8 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
     });
     let due_time_response = null;
     if (due_date && due_time && due_time.trim() !== '') {
-      const hours = due_date.getUTCHours();
-      const minutes = due_date.getUTCMinutes();
+      const hours = due_date.getHours();
+      const minutes = due_date.getMinutes();
       due_time_response = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
     req.session.flash = [{ type: 'success', message: 'Задача успешно создана' }];
@@ -220,8 +221,8 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
         await task.save();
       } else {
         due_date = dateObj.toISOString().split('T')[0];
-        const hours = dateObj.getUTCHours();
-        const minutes = dateObj.getUTCMinutes();
+        const hours = dateObj.getHours();
+        const minutes = dateObj.getMinutes();
         const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         due_time = timeStr !== '00:00' ? timeStr : null;
       }
@@ -265,13 +266,13 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
     } else if (existingTask.due_date) {
       const prev = new Date(existingTask.due_date);
       if (!isNaN(prev.getTime())) {
-        hours = prev.getUTCHours();
-        minutes = prev.getUTCMinutes();
+        hours = prev.getHours();
+        minutes = prev.getMinutes();
       }
     }
     const hoursStr = String(hours).padStart(2, '0');
     const minutesStr = String(minutes).padStart(2, '0');
-    due_date = new Date(`${bodyDueDate}T${hoursStr}:${minutesStr}:00.000Z`);
+    due_date = new Date(`${bodyDueDate}T${hoursStr}:${minutesStr}:00`);
     if (isNaN(due_date.getTime())) {
       return res.status(400).json({ error: 'Некорректная дата или время' });
     }
