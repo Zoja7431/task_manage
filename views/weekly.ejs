@@ -1,51 +1,157 @@
-<%- include('base', { body: `
-<div id="weekly-page" class="container my-4">
-  <h2 class="mb-4 text-light">Недельный обзор</h2>
-  <div class="card bg-card mb-4">
-    <div class="card-body py-2">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <span class="mx-2 text-light">Текущая неделя</span>
-        </div>
-        <div>
-          <form method="GET" action="/weekly">
-            <select class="form-select form-select-sm bg-card text-light" name="status" onchange="this.form.submit()">
-              <option value="" ${!statusFilter ? 'selected' : ''}>Все статусы</option>
-              <option value="in_progress" ${statusFilter === 'in_progress' ? 'selected' : ''}>В процессе</option>
-              <option value="completed" ${statusFilter === 'completed' ? 'selected' : ''}>Завершено</option>
-            </select>
-          </form>
+<% console.log('Rendering week.ejs with:', { 
+  user: typeof user !== 'undefined' ? user : null, 
+  weekTasks: typeof weekTasks !== 'undefined' ? weekTasks : [], 
+  upcomingTasks: typeof upcomingTasks !== 'undefined' ? upcomingTasks : [], 
+  tasksWithoutDate: typeof tasksWithoutDate !== 'undefined' ? tasksWithoutDate : [], 
+  pendingTasksWeek: pendingTasksWeek, 
+  completedTasksWeek: completedTasksWeek, 
+  overdueTasksWeek: overdueTasksWeek, 
+  pendingTasksLast3: pendingTasksLast3, 
+  completedTasksLast3: completedTasksLast3, 
+  overdueTasksLast3: overdueTasksLast3 
+}); %>
+<%- include('base', { 
+  body: `
+    <div id="week-page" class="container my-4">
+      <h2 class="mb-4">Неделя</h2>
+      
+      <!-- Статистика -->
+      <div class="week-stats card mb-4 animate__animated animate__fadeIn">
+        <div class="card-body">
+          <h3>Статистика за неделю</h3>
+          <p>Запланировано: <%= pendingTasksWeek %></p>
+          <p>Завершено: <%= completedTasksWeek %></p>
+          <p>Просрочено: <%= overdueTasksWeek %></p>
+          <h3>Статистика за последние 3 дня</h3>
+          <p>Запланировано: <%= pendingTasksLast3 %></p>
+          <p>Завершено: <%= completedTasksLast3 %></p>
+          <p>Просрочено: <%= overdueTasksLast3 %></p>
         </div>
       </div>
-    </div>
-  </div>
-  <div id="weekly-container">
-    ${Object.keys(weekTasks).map(date => `
-      <h4 class="text-light">${new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })}</h4>
-      <div class="list-group mb-4">
-        ${weekTasks[date].length === 0 ? `
-          <div class="text-center py-3 text-light bg-card">Нет задач</div>
-        ` : weekTasks[date].map(task => `
-          <div class="list-group-item bg-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}">
-            <div class="d-flex align-items-start">
-              <div class="custom-checkbox me-3 mt-1">
-                <input type="checkbox" id="weekly-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
-                <label for="weekly-task-${task.id}"></label>
+
+      <!-- Временная шкала -->
+      <div class="week-timeline card mb-4 animate__animated animate__fadeIn animate__delay-1s">
+        <div class="card-body">
+          <h3>Временная шкала недели</h3>
+          <div class="timeline d-flex justify-content-between">
+            <% const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']; %>
+            <% days.forEach((day, index) => { %>
+              <% const dayTasks = weekTasks.filter(task => new Date(task.due_date).getDay() === (index + 1) % 7).length; %>
+              <% const intensity = Math.min(dayTasks * 20, 100); %>
+              <% const opacity = (intensity / 100).toFixed(2); %>
+              <div class="day-block animate__animated animate__zoomIn" data-opacity="<%= opacity %>" style="color: var(--text-light);">
+                <span class="day-label"><%= day %></span>
+                <span class="task-count"><%= dayTasks %></span>
               </div>
-              <div class="flex-grow-1">
-                <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : ''}">${task.title}</h5>
-                <div class="d-flex flex-wrap align-items-center mt-2">
-                  <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
-                  ${task.Tags ? task.Tags.map(tag => `
-                    <span class="badge tag-badge me-2 mb-1">${tag.name}</span>
-                  `).join('') : ''}
-                </div>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+      <script>
+        (function(){
+          try {
+            document.querySelectorAll('.day-block').forEach(function(el){
+              var op = el.getAttribute('data-opacity');
+              if (!op) op = '0.08';
+              el.style.backgroundColor = 'rgba(82, 139, 255, ' + op + ')';
+            });
+          } catch (e) { /* ignore in non-browser rendering */ }
+        })();
+      </script>
+    `
+  }) %>
+      <div class="week-view">
+        <% const daysFull = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']; %>
+        <% daysFull.forEach((day, index) => { %>
+          <div class="day-card card mb-3 animate__animated animate__fadeInLeft animate__delay-<%= index %>s">
+            <div class="card-body">
+              <h3><%= day %></h3>
+              <div class="tasks sortable" id="day-<%= index %>">
+                <% weekTasks.filter(task => new Date(task.due_date).getDay() === (index + 1) % 7).forEach(task => { %>
+                  <div class="task-card card mb-2 <%= task.priority %>" id="task-<%= task.id %>" draggable="true">
+                    <div class="card-body">
+                      <div class="d-flex align-items-start">
+                        <div class="custom-checkbox me-3 mt-2">
+                          <input type="checkbox" id="task-<%= task.id %>" <%= task.status === 'completed' ? 'checked' : '' %>>
+                          <label for="task-<%= task.id %>"></label>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h5 class="card-title mb-1 <%= task.status === 'completed' ? 'text-decoration-line-through text-muted' : '' %>"><%= task.title %></h5>
+                          <% if (task.description) { %>
+                            <p class="card-text text-muted small"><%= task.description %></p>
+                          <% } %>
+                          <div class="d-flex flex-wrap align-items-center mt-2">
+                            <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
+                            <% if (task.due_date) { %>
+                              <% const dueDate = new Date(task.due_date); %>
+                              <% const dueTime = dueDate ? \`\${String(dueDate.getUTCHours()).padStart(2, '0')}:\${String(dueDate.getUTCMinutes()).padStart(2, '0')}\` : null; %>
+                              <% const showTime = dueTime && dueTime !== '00:00'; %>
+                              <span class="badge date-badge me-2 mb-1 <%= task.status === 'overdue' ? 'overdue' : '' %>"><i class="bi bi-calendar me-1"></i><%= dueDate.toLocaleString('ru-RU', showTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }) %></span>
+                            <% } %>
+                            <% if (task.status === 'overdue' ) { %>
+                              <span class="badge bg-danger me-2 mb-1">Просрочена</span>
+                            <% } %>
+                            <% if (task.Tags && task.Tags.length) { %>
+                              <% task.Tags.forEach(tag => { %>
+                                <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
+                              <% }) %>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
               </div>
             </div>
           </div>
-        `).join('')}
+        <% }) %>
       </div>
-    `).join('')}
-  </div>
-</div>
-`}) %>
+
+      <!-- Раздел предстоящих задач -->
+      <div class="upcoming-tasks card mb-4 animate__animated animate__fadeIn animate__delay-1s">
+        <div class="card-body">
+          <h3>Предстоящие задачи</h3>
+          <div class="tasks">
+            <% if (upcomingTasks.length > 0) { %>
+              <% upcomingTasks.forEach(task => { %>
+                <div class="task-card card mb-2 <%= task.priority %>" id="task-<%= task.id %>" draggable="true">
+                  <div class="card-body">
+                    <div class="d-flex align-items-start">
+                      <div class="custom-checkbox me-3 mt-2">
+                        <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
+                        <label for="task-<%= task.id %>"></label>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h5 class="card-title mb-1 <%= task.status === 'completed' ? 'text-decoration-line-through text-muted' : '' %>"><%= task.title %></h5>
+                        <% if (task.description) { %>
+                          <p class="card-text text-muted small"><%= task.description %></p>
+                        <% } %>
+                        <div class="d-flex flex-wrap align-items-center mt-2">
+                          <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
+                          <% if (task.due_date) { %>
+                            <% const dueDate = new Date(task.due_date); %>
+                            <% const dueTime = dueDate ? `\${String(dueDate.getUTCHours()).padStart(2, '0')}:\${String(dueDate.getUTCMinutes()).padStart(2, '0')}` : null; %>
+                            <% const showTime = dueTime && dueTime !== '00:00'; %>
+                            <span class="badge date-badge me-2 mb-1 <%= task.status === 'overdue' ? 'overdue' : '' %>"><i class="bi bi-calendar me-1"></i><%= dueDate.toLocaleString('ru-RU', showTime ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }) %></span>
+                          <% } %>
+                          <% if (task.status === 'overdue' ) { %>
+                            <span class="badge bg-danger me-2 mb-1">Просрочена</span>
+                          <% } %>
+                          <% if (task.Tags && task.Tags.length) { %>
+                            <% task.Tags.forEach(tag => { %>
+                              <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
+                            <% }) %>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <p class="text-muted">Нет предстоящих задач</p>
+            <% } %>
+          </div>
+        </div>
+      </div>

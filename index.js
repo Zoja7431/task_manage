@@ -260,7 +260,6 @@ app.get('/debug/sessions', async (req, res) => {
   }
 });
 
-
 // Debug маршрут для очистки 'Invalid date'
 app.get('/debug/fix-dates', async (req, res) => {
   try {

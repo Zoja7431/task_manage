@@ -2,88 +2,119 @@ const express = require('express');
 const { Op } = require('sequelize');
 const router = express.Router();
 const { sequelize, models } = require('../index');
-const { Task, Tag } = models;
+const { User, Task, Tag, TaskTag } = models;
 
-// Middleware для проверки авторизации
 function isAuthenticated(req, res, next) {
   if (req.session.user) return next();
-  res.redirect('/welcome'); // Редирект на /welcome для неавторизованных
+  res.redirect('/welcome');
 }
 
-// Маршрут для страницы "Неделя"
+// Week
 router.get('/weekly', isAuthenticated, async (req, res) => {
-  console.log('Handling GET /weekly for user:', req.session.user.username);
-  const statusFilter = req.query.status || '';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Нормализация текущей даты
-  const weekEnd = new Date(today);
-  weekEnd.setDate(today.getDate() + 6);
+  const currentDate = new Date();
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Понедельник
 
-  // Условия для фильтрации задач
-  const where = {
-    user_id: req.session.user.id,
-    due_date: { [Op.between]: [today.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
-  };
-  if (statusFilter) where.status = statusFilter;
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Воскресенье
+
+  const startOfLast3Days = new Date(currentDate);
+  startOfLast3Days.setHours(0, 0, 0, 0);
+  startOfLast3Days.setDate(startOfLast3Days.getDate() - 3); // Три дня до текущей недели
 
   try {
-    // Получение задач с тэгами
-    const tasks = await Task.findAll({
-      where,
-      include: [{ model: Tag, through: { attributes: [] } }],
-      order: [['due_date', 'ASC']]
+    // Задачи за текущую неделю
+    const weekTasks = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: {
+          [Op.between]: [startOfWeek, endOfWeek],
+        },
+      },
+      include: [{ model: Tag, through: TaskTag }],
+      order: [['due_date', 'ASC']],
     });
 
-    // Нормализация due_date и обновление статуса просроченных задач
-    for (const task of tasks) {
-      // Нормализация due_date
-      if (task.due_date && (typeof task.due_date !== 'string' || task.due_date.trim() === '' || isNaN(new Date(task.due_date).getTime()))) {
-        console.log(`Invalid due_date for task ${task.id}: ${task.due_date}, setting to null`);
-        task.due_date = null;
-        await task.save();
-      }
-      const dueDate = task.due_date ? new Date(task.due_date) : null;
-      if (dueDate && dueDate < today && task.status !== 'completed') {
-        console.log(`Task ${task.id} is overdue, updating status`);
-        task.status = 'overdue';
-        await task.save();
-      }
-    }
+    // Задачи за последние 3 дня (для статистики)
+    const last3DaysTasks = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: {
+          [Op.between]: [startOfLast3Days, currentDate],
+        },
+      },
+      include: [{ model: Tag, through: TaskTag }],
+      order: [['due_date', 'ASC']],
+    });
 
-    // Группировка задач по дням
-    const weekTasks = {};
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      weekTasks[date.toISOString().split('T')[0]] = [];
-    }
+    // Предстоящие задачи (за пределами недели)
+    const upcomingTasks = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: {
+          [Op.gt]: endOfWeek,
+        },
+        status: {
+          [Op.ne]: 'completed',
+        },
+      },
+      include: [{ model: Tag, through: TaskTag }],
+      order: [['due_date', 'ASC']],
+    });
 
-    for (const task of tasks) {
-      if (task.due_date) {
-        // Нормализуем due_date до YYYY-MM-DD
-        const dueDate = new Date(task.due_date);
-        if (!isNaN(dueDate.getTime())) {
-          const dateKey = dueDate.toISOString().split('T')[0];
-          if (weekTasks[dateKey]) {
-            console.log(`Adding task ${task.id} to date ${dateKey}`);
-            weekTasks[dateKey].push(task);
-          } else {
-            console.log(`Skipping task ${task.id}: due_date ${dateKey} outside week range`);
-          }
-        } else {
-          console.log(`Skipping task ${task.id}: invalid due_date ${task.due_date}`);
-        }
-      }
-    }
+    // Статистика за текущую неделю
+    const pendingTasksWeek = weekTasks.filter(task => task.status !== 'completed' && task.status !== 'overdue').length;
+    const completedTasksWeek = weekTasks.filter(task => task.status === 'completed').length;
+    const overdueTasksWeek = weekTasks.filter(task => task.status === 'overdue').length;
 
-    // Рендеринг шаблона weekly.ejs
-    res.render('weekly', { weekTasks, today, statusFilter });
+    // Статистика за последние 3 дня
+    const pendingTasksLast3 = last3DaysTasks.filter(task => task.status !== 'completed' && task.status !== 'overdue').length;
+    const completedTasksLast3 = last3DaysTasks.filter(task => task.status === 'completed').length;
+    const overdueTasksLast3 = last3DaysTasks.filter(task => task.status === 'overdue').length;
+
+    // Задачи без даты
+    const tasksWithoutDate = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: null,
+      },
+      include: [{ model: Tag, through: TaskTag }],
+      order: [['created_at', 'DESC']],
+    });
+
+    res.render('week', {
+      user: req.session.user,
+      weekTasks,
+      upcomingTasks,
+      tasksWithoutDate,
+      pendingTasksWeek,
+      completedTasksWeek,
+      overdueTasksWeek,
+      pendingTasksLast3,
+      completedTasksLast3,
+      overdueTasksLast3,
+    });
   } catch (err) {
-    console.error('Weekly route error:', { error: err.message, stack: err.stack });
-    res.render('error', {
-      error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
-      stack: process.env.NODE_ENV === 'production' ? null : err.stack
-    });
+    console.error('Week route error:', err);
+    res.status(500).render('error', { error: 'Внутренняя ошибка сервера' });
+  }
+});
+
+// Перетаскивание задач для изменения даты
+app.post('/tasks/:id/update-date', isAuthenticated, async (req, res) => {
+  const { newDate } = req.body;
+  try {
+    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    if (!task) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    task.due_date = new Date(newDate);
+    await task.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Task update date error:', err);
+    res.status(500).json({ error: 'Ошибка при обновлении даты' });
   }
 });
 
