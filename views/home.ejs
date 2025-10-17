@@ -37,7 +37,11 @@
                     <div class="mb-3 date-picker-container">
                       <label for="taskDueDate" class="form-label">Срок выполнения</label>
                       <input type="date" class="form-control date-picker" id="taskDueDate" name="due_date">
-                      <button type="button" class="add-time-btn" onclick="toggleTimeInput('taskDueDate', 'taskDueTime', 'taskTimeWarning')">Добавить время</button>
+                      <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="add-time-btn" onclick="toggleTimeInput('taskDueDate', 'taskDueTime', 'taskTimeWarning')">Добавить время</button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setDate('taskDueDate', 'today')">Сегодня</button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setDate('taskDueDate', 'tomorrow')">Завтра</button>
+                      </div>
                       <input type="time" class="form-control date-picker d-none" id="taskDueTime" name="due_time">
                       <div id="taskTimeWarning" class="invalid-feedback" style="display: none;">Сначала добавьте дату</div>
                     </div>
@@ -255,7 +259,11 @@
                 <div class="mb-3 date-picker-container">
                   <label for="editTaskDueDate" class="form-label">Срок выполнения</label>
                   <input type="date" class="form-control date-picker" id="editTaskDueDate" name="due_date">
-                  <button type="button" class="add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="add-time-btn" onclick="toggleTimeInput('editTaskDueDate', 'editTaskDueTime', 'editTaskTimeWarning')">Добавить время</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setDate('editTaskDueDate', 'today')">Сегодня</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setDate('editTaskDueDate', 'tomorrow')">Завтра</button>
+                  </div>
                   <input type="time" class="form-control date-picker d-none" id="editTaskDueTime" name="due_time">
                   <div id="editTaskTimeWarning" class="invalid-feedback" style="display: none;">Сначала добавьте дату</div>
                 </div>

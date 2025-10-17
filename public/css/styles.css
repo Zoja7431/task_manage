@@ -83,6 +83,10 @@ body {
   box-shadow: var(--shadow);
 }
 
+.card-body {
+  background-color: var(--bg-card);
+}
+
 .task-card {
   background-color: var(--bg-card);
   border-left: 4px solid var(--secondary);
@@ -364,14 +368,14 @@ pre {
   background-color: #3a3a3a;
   color: var(--text-light);
   border-color: #4a4a4a;
-  z-index: 1500;
+  z-index: 9999;
   position: absolute;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dropdown {
   position: relative;
-  z-index: 1100;
+  z-index: 9998;
 }
 
 .dropdown-item {
@@ -542,6 +546,19 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
   transform: translateY(-1px);
 }
 
+.btn-outline-info {
+  color: #17a2b8;
+  border-color: #17a2b8;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-info:hover {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: var(--text-light);
+}
+
 .add-time-btn.error {
   border-color: var(--priority-high);
   animation: shake 0.5s ease-in-out;
@@ -642,6 +659,16 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
     -webkit-overflow-scrolling: touch; /* Плавный scroll на iOS */
     white-space: nowrap; /* Нет переноса */
     padding-bottom: 5px; /* Для скроллбара */
+  }
+
+  .date-picker-container .d-flex {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .date-picker-container .d-flex button {
+    width: 100%;
+    justify-content: center;
   }
 
   .tag-search {

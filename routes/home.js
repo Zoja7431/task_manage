@@ -129,7 +129,7 @@ router.post('/tasks', isAuthenticated, taskValidation, async (req, res) => {
       due_date
     });
     let due_time_response = null;
-    if (due_date) {
+    if (due_date && due_time && due_time.trim() !== '') {
       const hours = due_date.getUTCHours();
       const minutes = due_date.getUTCMinutes();
       due_time_response = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
@@ -220,7 +220,8 @@ router.get('/api/task/:id', isAuthenticated, async (req, res) => {
         due_date = dateObj.toISOString().split('T')[0];
         const hours = dateObj.getUTCHours();
         const minutes = dateObj.getUTCMinutes();
-        due_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        due_time = timeStr !== '00:00' ? timeStr : null;
       }
     }
     res.json({
