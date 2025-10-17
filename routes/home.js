@@ -44,10 +44,17 @@ router.get('/', isAuthenticated, async (req, res) => {
   if (priorityFilter) where.priority = priorityFilter;
 
   try {
+    // Server-side tag filtering
+    const include = [{ model: Tag, through: { attributes: [] } }];
+    if (tagFilter.length) {
+      include[0].where = { name: { [Op.in]: tagFilter.map(t => t.toLowerCase()) } };
+      include[0].required = true;
+    }
     const tasks = await Task.findAll({
       where,
-      include: [{ model: Tag, through: { attributes: [] } }],
-      order: [['id', 'DESC']]
+      include,
+      order: [['id', 'DESC']],
+      distinct: true
     });
 
     const today = new Date();
@@ -71,12 +78,7 @@ router.get('/', isAuthenticated, async (req, res) => {
       }
     }
 
-    let filteredTasks = tasks;
-    if (tagFilter.length) {
-      filteredTasks = tasks.filter(task => 
-        task.Tags.some(tag => tagFilter.includes(tag.name))
-      );
-    }
+    const filteredTasks = tasks; // already filtered by include when tagFilter provided
 
     const tags = await Tag.findAll({ where: { user_id: req.session.user.id } });
 
@@ -247,10 +249,29 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
   }
 
   const { title, due_date: bodyDueDate, due_time, priority, tags, description } = req.body;
+  // Preserve existing time if date provided but time not changed
   let due_date = null;
   if (bodyDueDate && bodyDueDate.trim() !== '') {
-    const time = due_time && due_time.trim() !== '' ? due_time : '00:00';
-    due_date = new Date(`${bodyDueDate}T${time}:00.000Z`);
+    // Fetch existing task first to preserve time component when due_time is not provided
+    const existingTask = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    if (!existingTask) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    let hours = 0, minutes = 0;
+    if (due_time && due_time.trim() !== '') {
+      const [h, m] = due_time.split(':').map(Number);
+      hours = Number.isFinite(h) ? h : 0;
+      minutes = Number.isFinite(m) ? m : 0;
+    } else if (existingTask.due_date) {
+      const prev = new Date(existingTask.due_date);
+      if (!isNaN(prev.getTime())) {
+        hours = prev.getUTCHours();
+        minutes = prev.getUTCMinutes();
+      }
+    }
+    const hoursStr = String(hours).padStart(2, '0');
+    const minutesStr = String(minutes).padStart(2, '0');
+    due_date = new Date(`${bodyDueDate}T${hoursStr}:${minutesStr}:00.000Z`);
     if (isNaN(due_date.getTime())) {
       return res.status(400).json({ error: 'Некорректная дата или время' });
     }

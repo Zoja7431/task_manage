@@ -27,22 +27,20 @@
           <div class="text-center py-3 text-light bg-card">Нет задач</div>
         ` : weekTasks[date].map(task => `
           <div class="list-group-item bg-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}">
-            <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-start">
+              <div class="custom-checkbox me-3 mt-1">
+                <input type="checkbox" id="weekly-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
+                <label for="weekly-task-${task.id}"></label>
+              </div>
               <div class="flex-grow-1">
-                <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title' : ''}">${task.title}</h5>
+                <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : ''}">${task.title}</h5>
                 <div class="d-flex flex-wrap align-items-center mt-2">
-                  <span class="badge ${task.status === 'in_progress' ? 'bg-primary' : task.status === 'completed' ? 'bg-success' : 'bg-danger'} status-badge me-2 mb-1">
-                    ${task.status === 'in_progress' ? 'В процессе' : task.status === 'completed' ? 'Завершено' : 'Просрочено'}
-                  </span>
+                  <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
                   ${task.Tags ? task.Tags.map(tag => `
-                    <span class="badge bg-secondary tag-badge me-2 mb-1">${tag.name}</span>
+                    <span class="badge tag-badge me-2 mb-1">${tag.name}</span>
                   `).join('') : ''}
                 </div>
               </div>
-              <!-- Изменено: AJAX onclick вместо form submit -->
-              <button type="button" class="btn btn-primary btn-sm" onclick="markCompleted('${task.id}', this)">
-                ${task.status === 'completed' ? 'Вернуть в процесс' : 'Отметить как выполненное'}
-              </button>
             </div>
           </div>
         `).join('')}

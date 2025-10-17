@@ -201,17 +201,21 @@ function markCompleted(taskId, element) {
         alert(data.error);
         return;
       }
-      const isWeekly = document.getElementById('weekly-page') !== null;
-      const card = element.closest(isWeekly ? '.list-group-item' : '.task-card');
+  const isWeekly = document.getElementById('weekly-page') !== null;
+  const card = element.closest(isWeekly ? '.list-group-item' : '.task-card');
       const title = card.querySelector(isWeekly ? 'h5' : '.card-title');
       const statusBadge = card.querySelector('.status-badge');
       const isCheckbox = element.tagName === 'INPUT' && element.type === 'checkbox';
       const activeTasks = !isWeekly ? document.getElementById('active-tasks') : null;
       const completedTasks = !isWeekly ? document.getElementById('completed-tasks') : null;
 
-      card.classList.add('remove-task');
+      if (!isWeekly) {
+        card.classList.add('remove-task');
+      }
       setTimeout(() => {
-        card.classList.remove('remove-task');
+        if (!isWeekly) {
+          card.classList.remove('remove-task');
+        }
         if (data.status === 'completed') {
           card.classList.add('task-completed');
           title.classList.add('text-decoration-line-through', 'text-muted');
