@@ -201,17 +201,21 @@ function markCompleted(taskId, element) {
         alert(data.error);
         return;
       }
-      const isWeekly = document.getElementById('weekly-page') !== null;
-      const card = element.closest(isWeekly ? '.list-group-item' : '.task-card');
+  const isWeekly = document.getElementById('weekly-page') !== null;
+  const card = element.closest(isWeekly ? '.list-group-item' : '.task-card');
       const title = card.querySelector(isWeekly ? 'h5' : '.card-title');
       const statusBadge = card.querySelector('.status-badge');
       const isCheckbox = element.tagName === 'INPUT' && element.type === 'checkbox';
       const activeTasks = !isWeekly ? document.getElementById('active-tasks') : null;
       const completedTasks = !isWeekly ? document.getElementById('completed-tasks') : null;
 
-      card.classList.add('remove-task');
+      if (!isWeekly) {
+        card.classList.add('remove-task');
+      }
       setTimeout(() => {
-        card.classList.remove('remove-task');
+        if (!isWeekly) {
+          card.classList.remove('remove-task');
+        }
         if (data.status === 'completed') {
           card.classList.add('task-completed');
           title.classList.add('text-decoration-line-through', 'text-muted');
@@ -486,10 +490,22 @@ function toggleTag(event, button, inputId) {
 }
 
 function updateSelectedTags(inputId) {
-  const tagList = document.getElementById(inputId === 'editTaskSelectedTags' ? 'editTaskTagList' : inputId === 'taskSelectedTags' ? 'taskTagList' : 'filterTagList');
+  let tagListId;
+  if (inputId === 'editTaskSelectedTags') {
+    tagListId = 'editTaskTagList';
+  } else if (inputId === 'taskSelectedTags') {
+    tagListId = 'taskTagList';
+  } else if (inputId === 'filterSelectedTags') {
+    tagListId = 'filterTagList';
+  }
+  
+  const tagList = document.getElementById(tagListId);
   if (tagList) {
     const selectedTags = Array.from(tagList.querySelectorAll('.tag-item.active')).map(btn => btn.dataset.value);
-    document.getElementById(inputId).value = selectedTags.join(',');
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
+      inputElement.value = selectedTags.join(',');
+    }
   }
 }
 
@@ -576,6 +592,13 @@ document.addEventListener('DOMContentLoaded', () => {
     createTaskForm.addEventListener('submit', (e) => {
       e.preventDefault();
       createTask();
+    });
+  }
+
+  const filterForm = document.getElementById('filterForm');
+  if (filterForm) {
+    filterForm.addEventListener('submit', (e) => {
+      updateSelectedTags('filterSelectedTags');
     });
   }
 
@@ -680,4 +703,17 @@ function toggleTimeInput(dateInputId, timeInputId, warningId) {
   
   timeInput.classList.toggle('d-none');
   button.textContent = timeInput.classList.contains('d-none') ? 'Добавить время' : 'Убрать время';
+}
+
+function setDate(dateInputId, type) {
+  const dateInput = document.getElementById(dateInputId);
+  const today = new Date();
+  
+  if (type === 'today') {
+    dateInput.value = today.toISOString().split('T')[0];
+  } else if (type === 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    dateInput.value = tomorrow.toISOString().split('T')[0];
+  }
 }

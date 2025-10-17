@@ -788,132 +788,13 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
   }
 }
 
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* Week page styles */
-.week-view {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.day-card {
-  flex: 1 1 200px;
-  background-color: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
-.day-card h3 {
-  color: var(--text-light);
-}
-
-.tasks {
-  min-height: 100px;
-  padding: 10px;
-  border: 1px dashed #4a4a4a;
-  border-radius: 4px;
-}
-
-.task-card.draggable {
-  cursor: grab;
-}
-
-.task-card.dragging {
-  opacity: 0.5;
-}
-
-.no-date-window {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  height: 500px;
-  z-index: 2000;
-  background-color: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-  resize: both;
-  overflow: auto;
-}
-
-.no-date-window.minimized {
-  width: 200px;
-  height: 50px;
-  overflow: hidden;
-}
-
-.no-date-window .card-header {
-  cursor: move;
-}
-
-@media (max-width: 576px) {
-  .week-view {
-    flex-direction: column;
-  }
-
-  .no-date-window {
-    width: 90%;
-    height: 70%;
-    resize: none;
-  }
-}
-
-/* Animation for line-through erasure */
-.text-decoration-line-through {
-  position: relative;
-}
-
-.text-decoration-line-through::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: var(--text-muted);
-  transition: width 0.5s ease;
-}
-
-.text-decoration-line-through.erase::before {
-  width: 100%;
-}
-
-/* Timeline styles */
-.week-timeline {
-  background-color: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
-.timeline {
-  display: flex;
-  justify-content: space-around;
-  padding: 20px;
-}
-
-.day-block {
-  text-align: center;
-  padding: 10px;
-  border-radius: 4px;
-  min-width: 60px;
-  transition: background-color 0.3s ease;
-}
-
-.task-count {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: bold;
 }

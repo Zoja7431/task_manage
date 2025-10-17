@@ -291,3 +291,4 @@ sequelize.sync({ force: false }).then(() => {
   logger.error(`Sequelize sync error: ${err.message}, Stack: ${err.stack}`);
   console.error('Sequelize sync error:', err);
 });
+
