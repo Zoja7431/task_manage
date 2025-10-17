@@ -83,7 +83,7 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
       order: [['created_at', 'DESC']],
     });
 
-    res.render('week', {
+  res.render('weekly', {
       user: req.session.user,
       weekTasks,
       upcomingTasks,
@@ -102,7 +102,7 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
 });
 
 // Перетаскивание задач для изменения даты
-app.post('/tasks/:id/update-date', isAuthenticated, async (req, res) => {
+router.post('/tasks/:id/update-date', isAuthenticated, async (req, res) => {
   const { newDate } = req.body;
   try {
     const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
