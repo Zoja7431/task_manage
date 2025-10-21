@@ -604,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterForm = document.getElementById('filterForm');
   if (filterForm) {
     filterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
       updateSelectedTags('filterSelectedTags');
       // Принудительно обновляем URL с выбранными тегами
       const selectedTags = document.getElementById('filterSelectedTags').value;
@@ -614,7 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
         url.searchParams.delete('tags');
       }
       window.location.href = url.toString();
-      e.preventDefault();
     });
   }
 
