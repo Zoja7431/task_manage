@@ -49,28 +49,28 @@
       <!-- Временная шкала -->
       <div class="timeline-container mb-4">
         <div class="timeline">
-          <% 
-          const today = new Date();
-          const weekStart = new Date(today);
-          weekStart.setDate(today.getDate() - today.getDay() + 1); // Понедельник
-          
-          for (let i = 0; i < 7; i++) {
-            const date = new Date(weekStart);
-            date.setDate(weekStart.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            const isToday = dateStr === today.toISOString().split('T')[0];
-            const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' });
-            const dayNumber = date.getDate();
-            const taskCount = weekTasks[dateStr] ? weekTasks[dateStr].length : 0;
-            const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
-          %>
-            <div class="timeline-day <%= isToday ? 'today' : '' %> intensity-<%= intensity %>" data-date="<%= dateStr %>">
+          <% if (typeof timelineData !== 'undefined' && timelineData) { %>
+            <% timelineData.forEach(day => { %>
+              <div class="timeline-day <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
+                <div class="timeline-day-header">
+                  <div class="day-name"><%= day.dayName %></div>
+                  <div class="day-number"><%= day.dayNumber %></div>
+                </div>
+                <div class="timeline-day-content">
+                  <div class="task-count"><%= day.taskCount %> задач</div>
+                  <div class="timeline-bar"></div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <!-- Fallback если timelineData не передана -->
+            <div class="timeline-day intensity-empty" data-date="<%= today.toISOString().split('T')[0] %>">
               <div class="timeline-day-header">
-                <div class="day-name"><%= dayName %></div>
-                <div class="day-number"><%= dayNumber %></div>
+                <div class="day-name">Сегодня</div>
+                <div class="day-number"><%= today.getDate() %></div>
               </div>
               <div class="timeline-day-content">
-                <div class="task-count"><%= taskCount %> задач</div>
+                <div class="task-count">0 задач</div>
                 <div class="timeline-bar"></div>
               </div>
             </div>
@@ -79,83 +79,92 @@
   </div>
 
       <!-- Детали задач по дням -->
-  <div id="weekly-container">
-        <% Object.keys(weekTasks).forEach(date => { %>
-          <div class="day-section mb-4" data-date="<%= date %>">
-            <div class="card">
-              <div class="card-header bg-card">
-                <h5 class="mb-0 text-light">
-                  <i class="bi bi-calendar3 me-2"></i>
-                  <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
-                  <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
-                </h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="list-group list-group-flush day-tasks" data-date="<%= date %>">
-                  <% if (weekTasks[date].length === 0) { %>
-                    <div class="list-group-item bg-card text-center py-4">
-                      <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-                      <p class="text-muted mt-2 mb-0">Нет задач на этот день</p>
-                    </div>
-                  <% } else { %>
-                    <% weekTasks[date].forEach(task => { %>
-                      <div class="list-group-item bg-card task-item <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %> <%= task.status === 'completed' ? 'task-completed' : '' %>" 
-                           draggable="true" data-task-id="<%= task.id %>" data-due-date="<%= task.due_date %>">
-            <div class="d-flex align-items-start">
-              <div class="custom-checkbox me-3 mt-1">
-                            <input type="checkbox" id="weekly-task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
-                            <label for="weekly-task-<%= task.id %>"></label>
-              </div>
-              <div class="flex-grow-1">
-                            <h6 class="mb-1 text-light <%= task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : '' %>"><%= task.title %></h6>
-                            <% if (task.description) { %>
-                              <p class="text-muted small mb-2"><%= task.description %></p>
-                            <% } %>
-                <div class="d-flex flex-wrap align-items-center mt-2">
-                              <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
-                              <% if (task.Tags && task.Tags.length > 0) { %>
-                                <% task.Tags.forEach(tag => { %>
-                                  <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
-                                <% }); %>
+      <div id="weekly-container">
+        <% if (typeof weekTasks !== 'undefined' && weekTasks) { %>
+          <% for (const date in weekTasks) { %>
+            <div class="day-section mb-4" data-date="<%= date %>">
+              <div class="card">
+                <div class="card-header bg-card">
+                  <h5 class="mb-0 text-light">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
+                    <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
+                  </h5>
+                </div>
+                <div class="card-body p-0">
+                  <div class="list-group list-group-flush day-tasks" data-date="<%= date %>">
+                    <% if (weekTasks[date].length === 0) { %>
+                      <div class="list-group-item bg-card text-center py-4">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">Нет задач на этот день</p>
+                      </div>
+                    <% } else { %>
+                      <% for (let i = 0; i < weekTasks[date].length; i++) { %>
+                        <% const task = weekTasks[date][i]; %>
+                        <div class="list-group-item bg-card task-item <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %> <%= task.status === 'completed' ? 'task-completed' : '' %>" 
+                             draggable="true" data-task-id="<%= task.id %>" data-due-date="<%= task.due_date %>">
+                          <div class="d-flex align-items-start">
+                            <div class="custom-checkbox me-3 mt-1">
+                              <input type="checkbox" id="weekly-task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
+                              <label for="weekly-task-<%= task.id %>"></label>
+                            </div>
+                            <div class="flex-grow-1">
+                              <h6 class="mb-1 text-light <%= task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : '' %>"><%= task.title %></h6>
+                              <% if (task.description) { %>
+                                <p class="text-muted small mb-2"><%= task.description %></p>
                               <% } %>
-                              <% if (task.due_date) { %>
-                                <% 
-                                  try {
-                                    const dueDate = new Date(task.due_date);
-                                    const hours = dueDate.getHours();
-                                    const minutes = dueDate.getMinutes();
-                                    const timeStr = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-                                    if (timeStr !== '00:00') {
-                                %>
-                                  <span class="badge date-badge me-2 mb-1"><i class="bi bi-clock me-1"></i><%= timeStr %></span>
-                                <% 
+                              <div class="d-flex flex-wrap align-items-center mt-2">
+                                <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
+                                <% if (task.Tags && task.Tags.length > 0) { %>
+                                  <% for (let j = 0; j < task.Tags.length; j++) { %>
+                                    <% const tag = task.Tags[j]; %>
+                                    <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
+                                  <% } %>
+                                <% } %>
+                                <% if (task.due_date) { %>
+                                  <% 
+                                    try {
+                                      const dueDate = new Date(task.due_date);
+                                      const hours = dueDate.getHours();
+                                      const minutes = dueDate.getMinutes();
+                                      const timeStr = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+                                      if (timeStr !== '00:00') {
+                                  %>
+                                    <span class="badge date-badge me-2 mb-1"><i class="bi bi-clock me-1"></i><%= timeStr %></span>
+                                  <% 
+                                      }
+                                    } catch (e) {
+                                      console.error('Date parsing error:', e);
                                     }
-                                  } catch (e) {
-                                    console.error('Date parsing error:', e);
-                                  }
-                                %>
-                              <% } %>
+                                  %>
+                                <% } %>
+                              </div>
+                            </div>
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
+                              </ul>
                             </div>
                           </div>
-                          <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                              <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                              <li><a class="dropdown-item" href="#" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
-                              <li><hr class="dropdown-divider"></li>
-                              <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
-                            </ul>
-                          </div>
                         </div>
-                      </div>
-                    <% }); %>
-                  <% } %>
+                      <% } %>
+                    <% } %>
+                  </div>
                 </div>
               </div>
             </div>
+          <% } %>
+        <% } else { %>
+          <div class="text-center py-5">
+            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">Нет данных для отображения</p>
           </div>
-        <% }); %>
+        <% } %>
       </div>
 
       <!-- Предстоящие задачи -->
@@ -169,7 +178,8 @@
             </div>
             <div class="card-body p-0">
               <div class="list-group list-group-flush">
-                <% upcomingTasks.forEach(task => { %>
+                <% for (let i = 0; i < upcomingTasks.length; i++) { %>
+                  <% const task = upcomingTasks[i]; %>
                   <div class="list-group-item bg-card <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %>">
                     <div class="d-flex align-items-start">
                       <div class="custom-checkbox me-3 mt-1">
@@ -185,15 +195,16 @@
                             <%= new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) %>
                           </span>
                           <% if (task.Tags && task.Tags.length > 0) { %>
-                            <% task.Tags.forEach(tag => { %>
+                            <% for (let j = 0; j < task.Tags.length; j++) { %>
+                              <% const tag = task.Tags[j]; %>
                               <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
-                            <% }); %>
+                            <% } %>
                           <% } %>
                         </div>
                       </div>
                     </div>
                   </div>
-                <% }); %>
+                <% } %>
               </div>
             </div>
           </div>
@@ -219,7 +230,8 @@
         <div class="unsorted-content" id="unsorted-content">
           <% if (typeof unsortedTasks !== 'undefined' && unsortedTasks && unsortedTasks.length > 0) { %>
             <div class="unsorted-tasks">
-              <% unsortedTasks.forEach(task => { %>
+              <% for (let i = 0; i < unsortedTasks.length; i++) { %>
+                <% const task = unsortedTasks[i]; %>
                 <div class="unsorted-task-item <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %>" 
                      draggable="true" data-task-id="<%= task.id %>">
                   <div class="d-flex align-items-start">
@@ -232,9 +244,10 @@
                       <div class="d-flex flex-wrap align-items-center">
                         <span class="badge priority-badge priority-<%= task.priority %> me-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
                         <% if (task.Tags && task.Tags.length > 0) { %>
-                          <% task.Tags.forEach(tag => { %>
+                          <% for (let j = 0; j < task.Tags.length; j++) { %>
+                            <% const tag = task.Tags[j]; %>
                             <span class="badge tag-badge me-1"><%= tag.name %></span>
-                          <% }); %>
+                          <% } %>
                         <% } %>
                       </div>
                     </div>
@@ -250,7 +263,7 @@
                     </div>
                   </div>
                 </div>
-              <% }); %>
+              <% } %>
             </div>
           <% } else { %>
             <p class="text-muted text-center mt-3">Нет задач без даты</p>

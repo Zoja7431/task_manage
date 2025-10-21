@@ -107,6 +107,31 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
       }
     }
 
+    // Генерация данных для временной шкалы
+    const timelineData = [];
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay() + 1); // Понедельник
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      const isToday = dateStr === today.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' });
+      const dayNumber = date.getDate();
+      const taskCount = weekTasks[dateStr] ? weekTasks[dateStr].length : 0;
+      const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
+      
+      timelineData.push({
+        date: dateStr,
+        isToday,
+        dayName,
+        dayNumber,
+        taskCount,
+        intensity
+      });
+    }
+
     // Рендеринг шаблона weekly.ejs
     res.render('weekly', { 
       weekTasks, 
@@ -114,6 +139,7 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
       statusFilter, 
       upcomingTasks, 
       unsortedTasks,
+      timelineData,
       stats: {
         total: totalTasks,
         completed: completedTasks,
