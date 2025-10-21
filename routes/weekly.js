@@ -18,8 +18,12 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
   today.setHours(0, 0, 0, 0); // Нормализация текущей даты
   const weekEnd = new Date(today);
   weekEnd.setDate(today.getDate() + 6);
+  
+  // Дата для статистики (3 дня назад)
+  const statsStart = new Date(today);
+  statsStart.setDate(today.getDate() - 3);
 
-  // Условия для фильтрации задач
+  // Условия для фильтрации задач недели
   const where = {
     user_id: req.session.user.id,
     due_date: { [Op.between]: [today.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
@@ -27,16 +31,48 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
   if (statusFilter) where.status = statusFilter;
 
   try {
-    // Получение задач с тэгами
+    // Получение задач недели с тэгами
     const tasks = await Task.findAll({
       where,
       include: [{ model: Tag, through: { attributes: [] } }],
       order: [['due_date', 'ASC']]
     });
 
+    // Получение предстоящих задач (после недели)
+    const upcomingTasks = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: { [Op.gt]: weekEnd.toISOString().split('T')[0] }
+      },
+      include: [{ model: Tag, through: { attributes: [] } }],
+      order: [['due_date', 'ASC']],
+      limit: 10
+    });
+
+    // Получение задач без даты
+    const unsortedTasks = await Task.findAll({
+      where: {
+        user_id: req.session.user.id,
+        due_date: null
+      },
+      include: [{ model: Tag, through: { attributes: [] } }],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Статистика за период (3 дня назад + неделя)
+    const statsWhere = {
+      user_id: req.session.user.id,
+      due_date: { [Op.between]: [statsStart.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0]] }
+    };
+    
+    const [totalTasks, completedTasks, plannedTasks] = await Promise.all([
+      Task.count({ where: statsWhere }),
+      Task.count({ where: { ...statsWhere, status: 'completed' } }),
+      Task.count({ where: { ...statsWhere, status: 'in_progress' } })
+    ]);
+
     // Нормализация due_date и обновление статуса просроченных задач
     for (const task of tasks) {
-      // Нормализация due_date
       if (task.due_date && (typeof task.due_date !== 'string' || task.due_date.trim() === '' || isNaN(new Date(task.due_date).getTime()))) {
         console.log(`Invalid due_date for task ${task.id}: ${task.due_date}, setting to null`);
         task.due_date = null;
@@ -60,24 +96,30 @@ router.get('/weekly', isAuthenticated, async (req, res) => {
 
     for (const task of tasks) {
       if (task.due_date) {
-        // Нормализуем due_date до YYYY-MM-DD
         const dueDate = new Date(task.due_date);
         if (!isNaN(dueDate.getTime())) {
           const dateKey = dueDate.toISOString().split('T')[0];
           if (weekTasks[dateKey]) {
             console.log(`Adding task ${task.id} to date ${dateKey}`);
             weekTasks[dateKey].push(task);
-          } else {
-            console.log(`Skipping task ${task.id}: due_date ${dateKey} outside week range`);
           }
-        } else {
-          console.log(`Skipping task ${task.id}: invalid due_date ${task.due_date}`);
         }
       }
     }
 
     // Рендеринг шаблона weekly.ejs
-    res.render('weekly', { weekTasks, today, statusFilter });
+    res.render('weekly', { 
+      weekTasks, 
+      today, 
+      statusFilter, 
+      upcomingTasks, 
+      unsortedTasks,
+      stats: {
+        total: totalTasks,
+        completed: completedTasks,
+        planned: plannedTasks
+      }
+    });
   } catch (err) {
     console.error('Weekly route error:', { error: err.message, stack: err.stack });
     res.render('error', {

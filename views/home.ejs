@@ -30,8 +30,8 @@
                 <div class="accordion-item">
                   <h2 class="accordion-header">
                   <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#dueDateCollapse">
+                    <i class="bi bi-calendar-event me-2"></i>
                     <span>Добавить дату</span>
-                    <i class="bi bi-calendar-event"></i>
                   </button>
                   </h2>
                   <div id="dueDateCollapse" class="accordion-collapse collapse">
@@ -53,8 +53,8 @@
                 <div class="accordion-item">
                   <h2 class="accordion-header">
                   <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#descriptionCollapse">
+                    <i class="bi bi-card-text me-2"></i>
                     <span>Добавить описание</span>
-                    <i class="bi bi-card-text"></i>
                   </button>
                   </h2>
                   <div id="descriptionCollapse" class="accordion-collapse collapse">
@@ -67,8 +67,8 @@
                 <div class="accordion-item">
                   <h2 class="accordion-header">
                   <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#tagsCollapse">
+                    <i class="bi bi-tags me-2"></i>
                     <span>Добавить теги</span>
-                    <i class="bi bi-tags"></i>
                   </button>
                   </h2>
                   <div id="tagsCollapse" class="accordion-collapse collapse">
@@ -93,8 +93,8 @@
                 <div class="accordion-item">
                   <h2 class="accordion-header">
                   <button class="accordion-button collapsed add-optional d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#priorityCollapse">
+                    <i class="bi bi-exclamation-diamond me-2"></i>
                     <span>Добавить приоритет</span>
-                    <i class="bi bi-exclamation-diamond"></i>
                   </button>
                   </h2>
                   <div id="priorityCollapse" class="accordion-collapse collapse">
@@ -158,7 +158,7 @@
       <div id="active-tasks" class="list-group mb-5">
         ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status !== 'completed').map(task => {
           const dueDate = task.due_date ? new Date(task.due_date) : null;
-          const dueTime = dueDate ? `${String(dueDate.getUTCHours()).padStart(2, '0')}:${String(dueDate.getUTCMinutes()).padStart(2, '0')}` : null;
+          const dueTime = dueDate ? `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}` : null;
           const showTime = dueTime && dueTime !== '00:00';
           return `
           <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'}">
@@ -210,7 +210,7 @@
         <div id="completed-tasks" class="list-group">
           ${(typeof tasks !== 'undefined' ? tasks : []).filter(task => task.status === 'completed').map(task => {
             const dueDate = task.due_date ? new Date(task.due_date) : null;
-            const dueTime = dueDate ? `${String(dueDate.getUTCHours()).padStart(2, '0')}:${String(dueDate.getUTCMinutes()).padStart(2, '0')}` : null;
+            const dueTime = dueDate ? `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}` : null;
             const showTime = dueTime && dueTime !== '00:00';
             return `
             <div class="task-card card mb-3 ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} task-completed">

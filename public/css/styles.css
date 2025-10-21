@@ -376,14 +376,14 @@ pre {
   background-color: #3a3a3a;
   color: var(--text-light);
   border-color: #4a4a4a;
-  z-index: 9999;
+  z-index: 99999;
   position: absolute;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dropdown {
   position: relative;
-  z-index: 9998;
+  z-index: 99998;
 }
 
 .dropdown-item {
@@ -587,11 +587,31 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
   background: var(--text-muted);
   width: 0;
   transform: translateY(-50%);
-  animation: lineThrough 0.6s ease forwards;
+  animation: lineThrough 0.8s ease forwards;
 }
 @keyframes lineThrough {
   from { width: 0; }
   to { width: 100%; }
+}
+
+/* Анимация стирания штриха при отметке завершенной задачи */
+.task-title.strike-animation {
+  position: relative;
+  overflow: hidden;
+}
+.task-title.strike-animation::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  height: 2px;
+  background: var(--text-muted);
+  width: 100%;
+  transform: translateY(-50%);
+  animation: eraseStrike 0.6s ease forwards;
+}
+@keyframes eraseStrike {
+  from { width: 100%; }
+  to { width: 0; }
 }
 
 .add-time-btn.error {

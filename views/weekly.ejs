@@ -1,13 +1,43 @@
 <%- include('base', { body: `
 <div id="weekly-page" class="container my-4">
   <h2 class="mb-4 text-light">Недельный обзор</h2>
+  
+  <!-- Статистика -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card bg-card stats-card">
+        <div class="card-body text-center">
+          <h3 class="text-primary">${stats.total}</h3>
+          <p class="text-muted mb-0">Всего задач</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-card stats-card">
+        <div class="card-body text-center">
+          <h3 class="text-success">${stats.completed}</h3>
+          <p class="text-muted mb-0">Завершено</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-card stats-card">
+        <div class="card-body text-center">
+          <h3 class="text-warning">${stats.planned}</h3>
+          <p class="text-muted mb-0">Запланировано</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Фильтры -->
   <div class="card bg-card mb-4">
     <div class="card-body py-2">
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <span class="mx-2 text-light">Текущая неделя</span>
         </div>
-        <div>
+        <div class="d-flex gap-2">
           <form method="GET" action="/weekly">
             <select class="form-select form-select-sm bg-card text-light" name="status" onchange="this.form.submit()">
               <option value="" ${!statusFilter ? 'selected' : ''}>Все статусы</option>
@@ -15,27 +45,119 @@
               <option value="completed" ${statusFilter === 'completed' ? 'selected' : ''}>Завершено</option>
             </select>
           </form>
+          <button class="btn btn-sm btn-outline-primary" onclick="toggleUnsortedWindow()">
+            <i class="bi bi-list-ul me-1"></i>Задачи без даты
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Временная шкала -->
+  <div class="timeline-container mb-4">
+    <div class="timeline-header">
+      <h4 class="text-light mb-3">Временная шкала недели</h4>
+    </div>
+    <div class="timeline">
+      ${Object.keys(weekTasks).map((date, index) => {
+        const dateObj = new Date(date);
+        const dayName = dateObj.toLocaleDateString('ru-RU', { weekday: 'short' });
+        const dayNumber = dateObj.getDate();
+        const isToday = date === today.toISOString().split('T')[0];
+        const taskCount = weekTasks[date].length;
+        const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
+        
+        return `
+          <div class="timeline-day ${isToday ? 'today' : ''} intensity-${intensity}" data-date="${date}">
+            <div class="timeline-day-header">
+              <div class="day-name">${dayName}</div>
+              <div class="day-number">${dayNumber}</div>
+            </div>
+            <div class="timeline-day-content">
+              <div class="task-count">${taskCount} задач</div>
+              <div class="timeline-bar"></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- Детали задач по дням -->
   <div id="weekly-container">
     ${Object.keys(weekTasks).map(date => `
-      <h4 class="text-light">${new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })}</h4>
-      <div class="list-group mb-4">
-        ${weekTasks[date].length === 0 ? `
-          <div class="text-center py-3 text-light bg-card">Нет задач</div>
-        ` : weekTasks[date].map(task => `
-          <div class="list-group-item bg-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}">
+      <div class="day-section" data-date="${date}">
+        <h4 class="text-light day-title">
+          ${new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })}
+          <span class="badge bg-primary ms-2">${weekTasks[date].length}</span>
+        </h4>
+        <div class="list-group mb-4 day-tasks" data-date="${date}">
+          ${weekTasks[date].length === 0 ? `
+            <div class="text-center py-3 text-light bg-card rounded">Нет задач</div>
+          ` : weekTasks[date].map(task => `
+            <div class="list-group-item bg-card task-item ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'} ${task.status === 'completed' ? 'task-completed' : ''}" 
+                 draggable="true" data-task-id="${task.id}" data-due-date="${task.due_date}">
+              <div class="d-flex align-items-start">
+                <div class="custom-checkbox me-3 mt-1">
+                  <input type="checkbox" id="weekly-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
+                  <label for="weekly-task-${task.id}"></label>
+                </div>
+                <div class="flex-grow-1">
+                  <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : ''}">${task.title}</h5>
+                  ${task.description ? `<p class="text-muted small mb-2">${task.description}</p>` : ''}
+                  <div class="d-flex flex-wrap align-items-center mt-2">
+                    <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                    ${task.Tags ? task.Tags.map(tag => `
+                      <span class="badge tag-badge me-2 mb-1">${tag.name}</span>
+                    `).join('') : ''}
+                    ${task.due_date ? `
+                      <span class="badge date-badge me-2 mb-1">
+                        <i class="bi bi-clock me-1"></i>
+                        ${new Date(task.due_date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="#" onclick="openEditModal('${task.id}')">Редактировать</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}', this)">Удалить</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+  </div>
+
+  <!-- Предстоящие задачи -->
+  ${upcomingTasks && upcomingTasks.length > 0 ? `
+    <div class="upcoming-tasks mb-4">
+      <h4 class="text-light mb-3">
+        <i class="bi bi-calendar-plus me-2"></i>Предстоящие задачи
+      </h4>
+      <div class="list-group">
+        ${upcomingTasks.map(task => `
+          <div class="list-group-item bg-card ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'}">
             <div class="d-flex align-items-start">
               <div class="custom-checkbox me-3 mt-1">
-                <input type="checkbox" id="weekly-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
-                <label for="weekly-task-${task.id}"></label>
+                <input type="checkbox" id="upcoming-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
+                <label for="upcoming-task-${task.id}"></label>
               </div>
               <div class="flex-grow-1">
-                <h5 class="mb-1 text-light ${task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : ''}">${task.title}</h5>
+                <h5 class="mb-1 text-light">${task.title}</h5>
                 <div class="d-flex flex-wrap align-items-center mt-2">
                   <span class="badge priority-badge priority-${task.priority} me-2 mb-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                  <span class="badge date-badge me-2 mb-1">
+                    <i class="bi bi-calendar me-1"></i>
+                    ${new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  </span>
                   ${task.Tags ? task.Tags.map(tag => `
                     <span class="badge tag-badge me-2 mb-1">${tag.name}</span>
                   `).join('') : ''}
@@ -45,7 +167,516 @@
           </div>
         `).join('')}
       </div>
-    `).join('')}
+    </div>
+  ` : ''}
+</div>
+
+<!-- Плавающее окно для задач без даты -->
+<div id="unsorted-window" class="unsorted-window">
+  <div class="unsorted-header">
+    <h5 class="mb-0">
+      <i class="bi bi-list-ul me-2"></i>Задачи без даты
+      <span class="badge bg-primary ms-2" id="unsorted-count">${unsortedTasks ? unsortedTasks.length : 0}</span>
+    </h5>
+    <div class="unsorted-controls">
+      <button class="btn btn-sm btn-outline-secondary" onclick="minimizeUnsortedWindow()">
+        <i class="bi bi-dash"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="toggleUnsortedWindow()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+  </div>
+  <div class="unsorted-content" id="unsorted-content">
+    ${unsortedTasks && unsortedTasks.length > 0 ? `
+      <div class="unsorted-tasks">
+        ${unsortedTasks.map(task => `
+          <div class="unsorted-task-item ${task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low'}" 
+               draggable="true" data-task-id="${task.id}">
+            <div class="d-flex align-items-start">
+              <div class="custom-checkbox me-2">
+                <input type="checkbox" id="unsorted-task-${task.id}" onclick="markCompleted('${task.id}', this)" ${task.status === 'completed' ? 'checked' : ''}>
+                <label for="unsorted-task-${task.id}"></label>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1 text-light">${task.title}</h6>
+                <div class="d-flex flex-wrap align-items-center">
+                  <span class="badge priority-badge priority-${task.priority} me-1">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                  ${task.Tags ? task.Tags.map(tag => `
+                    <span class="badge tag-badge me-1">${tag.name}</span>
+                  `).join('') : ''}
+                </div>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                  <li><a class="dropdown-item" href="#" onclick="openEditModal('${task.id}')">Редактировать</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}', this)">Удалить</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `
+      <div class="text-center py-3 text-muted">Нет задач без даты</div>
+    `}
   </div>
 </div>
+
+<style>
+/* Стили для временной шкалы */
+.timeline-container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.timeline {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.timeline-day {
+  min-width: 80px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.timeline-day.today {
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+}
+
+.timeline-day.intensity-empty {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+.timeline-day.intensity-low {
+  background: linear-gradient(135deg, #4cd137, #44a03e);
+  border: 1px solid #4cd137;
+}
+
+.timeline-day.intensity-medium {
+  background: linear-gradient(135deg, #fbc531, #e1b12c);
+  border: 1px solid #fbc531;
+  color: #1a1a1a;
+}
+
+.timeline-day.intensity-high {
+  background: linear-gradient(135deg, #e84118, #c23616);
+  border: 1px solid #e84118;
+}
+
+.timeline-day-header {
+  margin-bottom: 8px;
+}
+
+.day-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.day-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.timeline-day-content {
+  position: relative;
+}
+
+.task-count {
+  font-size: 0.7rem;
+  margin-bottom: 5px;
+  opacity: 0.8;
+}
+
+.timeline-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  width: 0;
+  animation: fillBar 1s ease forwards;
+}
+
+@keyframes fillBar {
+  to { width: 100%; }
+}
+
+/* Стили для статистики */
+.stats-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Стили для плавающего окна */
+.unsorted-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: none;
+  flex-direction: column;
+}
+
+.unsorted-window.minimized {
+  height: auto;
+}
+
+.unsorted-window.minimized .unsorted-content {
+  display: none;
+}
+
+.unsorted-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #4a4a4a;
+  cursor: move;
+}
+
+.unsorted-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.unsorted-content {
+  padding: 15px 20px;
+  max-height: 400px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.unsorted-task-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: #3a3a3a;
+  border-left: 3px solid var(--secondary);
+  transition: transform 0.2s ease;
+}
+
+.unsorted-task-item:hover {
+  transform: translateX(5px);
+}
+
+.unsorted-task-item.priority-high {
+  border-left-color: var(--priority-high);
+}
+
+.unsorted-task-item.priority-medium {
+  border-left-color: var(--priority-medium);
+}
+
+.unsorted-task-item.priority-low {
+  border-left-color: var(--priority-low);
+}
+
+/* Drag and drop стили */
+.task-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.day-tasks.drag-over {
+  background: rgba(82, 139, 255, 0.1);
+  border: 2px dashed var(--primary);
+  border-radius: 8px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .timeline {
+    gap: 4px;
+  }
+  
+  .timeline-day {
+    min-width: 60px;
+    padding: 8px;
+  }
+  
+  .unsorted-window {
+    width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .day-section {
+    margin-bottom: 20px;
+  }
+}
+
+/* Анимации */
+.day-section {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-item {
+  transition: all 0.3s ease;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+</style>
+
+<script>
+// Drag and Drop функциональность
+let draggedElement = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Инициализация drag and drop
+  const taskItems = document.querySelectorAll('.task-item, .unsorted-task-item');
+  const dayTasks = document.querySelectorAll('.day-tasks');
+  
+  taskItems.forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+  });
+  
+  dayTasks.forEach(day => {
+    day.addEventListener('dragover', handleDragOver);
+    day.addEventListener('drop', handleDrop);
+    day.addEventListener('dragenter', handleDragEnter);
+    day.addEventListener('dragleave', handleDragLeave);
+  });
+  
+  // Инициализация плавающего окна
+  initUnsortedWindow();
+});
+
+function handleDragStart(e) {
+  draggedElement = e.target;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', e.target.outerHTML);
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedElement = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  e.target.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.target.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.target.classList.remove('drag-over');
+  
+  if (draggedElement && e.target.classList.contains('day-tasks')) {
+    const newDate = e.target.dataset.date;
+    const taskId = draggedElement.dataset.taskId;
+    
+    // Обновляем дату задачи на сервере
+    updateTaskDate(taskId, newDate);
+    
+    // Перемещаем элемент в новый контейнер
+    e.target.appendChild(draggedElement);
+    
+    // Обновляем временную шкалу
+    updateTimeline();
+  }
+}
+
+function updateTaskDate(taskId, newDate) {
+  fetch(`/api/task/${taskId}/date`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `due_date=${newDate}&due_time=00:00`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Task date updated successfully');
+      // Обновляем атрибут data-due-date у элемента
+      if (draggedElement) {
+        draggedElement.setAttribute('data-due-date', newDate);
+      }
+    } else {
+      console.error('Failed to update task date:', data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error updating task date:', error);
+  });
+}
+
+function updateTimeline() {
+  // Пересчитываем интенсивность дней
+  const timelineDays = document.querySelectorAll('.timeline-day');
+  timelineDays.forEach(day => {
+    const date = day.dataset.date;
+    const taskCount = document.querySelector(`[data-date="${date}"] .day-tasks`).children.length;
+    const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
+    
+    day.className = `timeline-day intensity-${intensity}`;
+    if (date === new Date().toISOString().split('T')[0]) {
+      day.classList.add('today');
+    }
+    
+    const taskCountElement = day.querySelector('.task-count');
+    if (taskCountElement) {
+      taskCountElement.textContent = `${taskCount} задач`;
+    }
+  });
+}
+
+// Функции для плавающего окна
+function initUnsortedWindow() {
+  const window = document.getElementById('unsorted-window');
+  const header = window.querySelector('.unsorted-header');
+  
+  // Делаем окно перетаскиваемым
+  let isDragging = false;
+  let currentX;
+  let currentY;
+  let initialX;
+  let initialY;
+  let xOffset = 0;
+  let yOffset = 0;
+  
+  header.addEventListener('mousedown', dragStart);
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', dragEnd);
+  
+  function dragStart(e) {
+    initialX = e.clientX - xOffset;
+    initialY = e.clientY - yOffset;
+    
+    if (e.target === header || header.contains(e.target)) {
+      isDragging = true;
+    }
+  }
+  
+  function drag(e) {
+    if (isDragging) {
+      e.preventDefault();
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      
+      xOffset = currentX;
+      yOffset = currentY;
+      
+      window.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    }
+  }
+  
+  function dragEnd(e) {
+    initialX = currentX;
+    initialY = currentY;
+    isDragging = false;
+  }
+}
+
+function toggleUnsortedWindow() {
+  const window = document.getElementById('unsorted-window');
+  if (window.style.display === 'none' || window.style.display === '') {
+    window.style.display = 'flex';
+    window.classList.remove('minimized');
+  } else {
+    window.style.display = 'none';
+  }
+}
+
+function minimizeUnsortedWindow() {
+  const window = document.getElementById('unsorted-window');
+  window.classList.toggle('minimized');
+}
+
+// Адаптивность для мобильных устройств
+function handleMobileDrag() {
+  if (window.innerWidth <= 768) {
+    // На мобильных устройствах используем touch события
+    const taskItems = document.querySelectorAll('.task-item, .unsorted-task-item');
+    
+    taskItems.forEach(item => {
+      item.addEventListener('touchstart', handleTouchStart, { passive: false });
+      item.addEventListener('touchmove', handleTouchMove, { passive: false });
+      item.addEventListener('touchend', handleTouchEnd, { passive: false });
+    });
+  }
+}
+
+let touchStartY = 0;
+let touchStartX = 0;
+
+function handleTouchStart(e) {
+  touchStartY = e.touches[0].clientY;
+  touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+  e.preventDefault();
+  // Простая реализация для мобильных устройств
+}
+
+function handleTouchEnd(e) {
+  // Простая реализация для мобильных устройств
+}
+
+// Инициализация мобильной версии
+window.addEventListener('resize', handleMobileDrag);
+handleMobileDrag();
+</script>
 `}) %>

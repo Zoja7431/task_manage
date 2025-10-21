@@ -235,8 +235,14 @@ function markCompleted(taskId, element) {
             element.textContent = 'Вернуть в процесс';
           }
         } else {
+          // Анимация стирания штриха
+          if (title.classList.contains('text-decoration-line-through')) {
+            title.classList.add('strike-animation');
+            setTimeout(() => {
+              title.classList.remove('strike-animation', 'text-decoration-line-through', 'text-muted');
+            }, 600);
+          }
           card.classList.remove('task-completed');
-          title.classList.remove('text-decoration-line-through', 'text-muted');
           if (statusBadge) {
             statusBadge.classList.remove('bg-success', 'bg-danger');
             statusBadge.classList.add('bg-primary');
@@ -599,6 +605,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterForm) {
     filterForm.addEventListener('submit', (e) => {
       updateSelectedTags('filterSelectedTags');
+      // Принудительно обновляем URL с выбранными тегами
+      const selectedTags = document.getElementById('filterSelectedTags').value;
+      const url = new URL(window.location);
+      if (selectedTags) {
+        url.searchParams.set('tags', selectedTags);
+      } else {
+        url.searchParams.delete('tags');
+      }
+      window.location.href = url.toString();
+      e.preventDefault();
     });
   }
 

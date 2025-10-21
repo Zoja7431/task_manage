@@ -296,6 +296,32 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
   }
 });
 
+// Простое обновление даты задачи (для drag and drop)
+router.post('/api/task/:id/date', isAuthenticated, async (req, res) => {
+  try {
+    const { due_date, due_time } = req.body;
+    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    if (!task) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+    
+    let newDueDate = null;
+    if (due_date && due_date.trim() !== '') {
+      const time = due_time && due_time.trim() !== '' ? due_time : '00:00';
+      newDueDate = new Date(`${due_date}T${time}:00`);
+      if (isNaN(newDueDate.getTime())) {
+        return res.status(400).json({ error: 'Некорректная дата или время' });
+      }
+    }
+    
+    await task.update({ due_date: newDueDate });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Task date update error:', err);
+    res.status(500).json({ error: 'Ошибка при обновлении даты задачи' });
+  }
+});
+
 // Создание тэга
 router.post('/tags', isAuthenticated, [
   body('name').trim().notEmpty().withMessage('Название тэга обязательно').isLength({ max: 50 }).withMessage('Название тэга не должно превышать 50 символов').escape()
