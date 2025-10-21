@@ -279,16 +279,38 @@ router.post('/api/task/:id', isAuthenticated, taskValidation, async (req, res) =
   }
 
   try {
-    const task = await Task.findOne({ where: { id: req.params.id, user_id: req.session.user.id } });
+    const task = await Task.findOne({ 
+      where: { id: req.params.id, user_id: req.session.user.id },
+      include: [{ model: Tag, through: { attributes: [] } }]
+    });
     if (!task) {
       return res.status(404).json({ error: 'Задача не найдена' });
     }
+    
+    // Обновляем основные поля задачи
     await task.update({
       title,
       description,
       priority: priority || 'medium',
       due_date
     });
+    
+    // Обновляем теги если они переданы
+    if (tags !== undefined) {
+      const tagNames = tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [];
+      const existingTags = await Tag.findAll({ 
+        where: { name: { [Op.in]: tagNames }, user_id: req.session.user.id } 
+      });
+      
+      // Удаляем все существующие связи с тегами
+      await task.setTags([]);
+      
+      // Добавляем новые теги
+      if (existingTags.length > 0) {
+        await task.setTags(existingTags);
+      }
+    }
+    
     res.json({ success: true });
   } catch (err) {
     console.error('Task update error:', err);
