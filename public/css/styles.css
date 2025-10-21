@@ -747,13 +747,240 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
     white-space: normal;
     text-overflow: clip;
   }
+}
 
-  .sort-label, .apply-button {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    word-break: break-word;
-    hyphens: auto;
+/* Weekly Page Styles */
+.timeline-container {
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.timeline {
+  display: flex;
+  gap: 1rem;
+  min-width: 100%;
+  padding: 0 1rem;
+}
+
+.timeline-day {
+  flex: 1;
+  min-width: 120px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.timeline-day:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.timeline-day.today {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(82, 139, 255, 0.3);
+}
+
+.timeline-day-header {
+  margin-bottom: 0.5rem;
+}
+
+.day-name {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-light);
+}
+
+.timeline-day-content {
+  position: relative;
+}
+
+.task-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.timeline-bar {
+  height: 4px;
+  background: var(--bg-dark);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Intensity levels */
+.timeline-day.intensity-empty .timeline-bar::after {
+  width: 0%;
+}
+
+.timeline-day.intensity-low .timeline-bar::after {
+  width: 25%;
+}
+
+.timeline-day.intensity-medium .timeline-bar::after {
+  width: 50%;
+}
+
+.timeline-day.intensity-high .timeline-bar::after {
+  width: 100%;
+}
+
+/* Day sections */
+.day-section {
+  margin-bottom: 2rem;
+}
+
+.day-section .card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.day-section .card-header {
+  border-bottom: 1px solid #404040;
+}
+
+/* Drag and drop styles */
+.drag-over {
+  background-color: rgba(82, 139, 255, 0.1) !important;
+  border: 2px dashed var(--primary) !important;
+}
+
+.task-item[draggable="true"] {
+  cursor: grab;
+}
+
+.task-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Unsorted tasks window */
+.unsorted-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 1000;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.unsorted-window:active {
+  cursor: grabbing;
+}
+
+.unsorted-header {
+  background: var(--bg-dark);
+  padding: 1rem;
+  border-bottom: 1px solid #404040;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+}
+
+.unsorted-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.unsorted-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.unsorted-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.unsorted-task-item {
+  background: var(--bg-dark);
+  border-radius: 6px;
+  padding: 0.75rem;
+  border: 1px solid #404040;
+  transition: all 0.2s ease;
+}
+
+.unsorted-task-item:hover {
+  background: #3a3a3a;
+  transform: translateX(2px);
+}
+
+.unsorted-task-item[draggable="true"] {
+  cursor: grab;
+}
+
+.unsorted-task-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Stats cards */
+.stats-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .timeline {
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  .timeline-day {
+    min-width: 80px;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .day-number {
+    font-size: 1.2rem;
+  }
+  
+  .task-count {
+    font-size: 0.7rem;
+  }
+  
+  .unsorted-window {
+    width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .unsorted-content {
+    max-height: 70vh;
   }
 }
 /* Стили для подвала и счётчика LiveInternet */
