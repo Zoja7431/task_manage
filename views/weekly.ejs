@@ -61,7 +61,7 @@
                   <div class="timeline-bar"></div>
                 </div>
               </div>
-            <% }); %>
+            <% }) %>
           <% } else { %>
             <!-- Fallback если timelineData не передана -->
             <div class="timeline-day intensity-empty" data-date="<%= today.toISOString().split('T')[0] %>">
@@ -75,8 +75,8 @@
               </div>
             </div>
           <% } %>
-    </div>
-  </div>
+        </div>
+      </div>
 
       <!-- Детали задач по дням -->
       <div id="weekly-container">
@@ -128,15 +128,12 @@
                                       const hours = dueDate.getHours();
                                       const minutes = dueDate.getMinutes();
                                       const timeStr = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-                                      if (timeStr !== '00:00') {
-                                  %>
-                                    <span class="badge date-badge me-2 mb-1"><i class="bi bi-clock me-1"></i><%= timeStr %></span>
-                                  <% 
-                                      }
+                                      if (timeStr !== '00:00') { %>
+                                        <span class="badge date-badge me-2 mb-1"><i class="bi bi-clock me-1"></i><%= timeStr %></span>
+                                  <% }
                                     } catch (e) {
                                       console.error('Date parsing error:', e);
-                                    }
-                                  %>
+                                    } %>
                                 <% } %>
                               </div>
                             </div>
@@ -318,8 +315,8 @@
             <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
           </div>
         </div>
-  </div>
-</div>
+      </div>
+    </div>
 
     <script>
       // Drag and Drop для задач
