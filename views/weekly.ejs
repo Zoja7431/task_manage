@@ -1,5 +1,4 @@
-<%- include('base', { 
-  body: `
+<%- include('base', { body:`
     <div id="weekly-page">
       <!-- Статистика -->
       <div class="row mb-4">
@@ -363,12 +362,12 @@
       });
 
       function updateTaskDate(taskId, newDate) {
-        fetch(`/api/task/${taskId}/date`, {
+        fetch('/api/task/' + taskId + '/date', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: `due_date=${newDate}&due_time=00:00`
+          body: 'due_date=' + newDate + '&due_time=00:00'
         })
         .then(response => response.json())
         .then(data => {
@@ -389,17 +388,18 @@
         
         timelineDays.forEach(day => {
           const date = day.dataset.date;
-          const taskCount = document.querySelector(`[data-date="${date}"] .day-tasks`).children.length;
+          const dayTasks = document.querySelector('[data-date="' + date + '"] .day-tasks');
+          const taskCount = dayTasks ? dayTasks.children.length : 0;
           const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
           
-          day.className = `timeline-day intensity-${intensity}`;
+          day.className = 'timeline-day intensity-' + intensity;
           if (date === new Date().toISOString().split('T')[0]) {
             day.classList.add('today');
           }
           
           const taskCountElement = day.querySelector('.task-count');
           if (taskCountElement) {
-            taskCountElement.textContent = `${taskCount} задач`;
+            taskCountElement.textContent = taskCount + ' задач';
           }
         });
       }
@@ -467,7 +467,7 @@
             xOffset = currentX;
             yOffset = currentY;
             
-            window.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            window.style.transform = 'translate(' + currentX + 'px, ' + currentY + 'px)';
           }
         }
         
