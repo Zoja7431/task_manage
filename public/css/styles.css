@@ -28,18 +28,27 @@ body {
 
 .navbar-dark .nav-link {
   color: var(--text-light);
+  margin-bottom: 1.5rem;
 }
 
 .navbar-dark .nav-link:hover {
   color: var(--text-muted);
+  margin-bottom: 1.5rem;
 }
 
 .navbar-dark .navbar-brand {
   color: var(--text-light);
+  margin-bottom: 1.5rem;
 }
 
 .navbar-dark .navbar-brand:hover {
   color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* Если нужно расстояние вокруг контента */
+main.container {
+    padding-top: 1rem; /* Дополнительно, если body в контейнере */
 }
 
 .btn-primary {

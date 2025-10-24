@@ -130,17 +130,22 @@
         </div>
     <% } %>
 
-    <!-- Здесь вставляется контент страницы (body теперь HTML) -->
-    <%- body %>
+    <main class="container">
+        <%- body %>
+    </main>
 
-    <footer class="footer py-3">
+   <footer class="footer py-3">
         <div class="container text-center">
             <p class="mb-2 text-muted">© 2025 TaskFlow. Все права защищены.</p>
             <div class="counter-wrapper">
                 <a href="https://www.liveinternet.ru/click" target="_blank" class="liveinternet-counter" title="LiveInternet: статистика посещений">
                     <img src="https://counter.yadro.ru/logo?14.11" alt="LiveInternet Counter" width="88" height="31">
                 </a>
-                <div class="rambler-counter" id="counter" id="top100_container" title="Rambler's Top100" target="_blank"> </div>
+                <!-- Исправленный див для Rambler/Top100: один id, и добавлен fallback img в noscript для случаев, когда JS отключён -->
+                <div class="rambler-counter" id="top100_container" title="Rambler's Top100"></div>
+                <noscript>
+                    <img src="//counter.rambler.ru/top100.cnt?pid=7749198" alt="Топ-100" />
+                </noscript>
             </div>
         </div>
     </footer>
