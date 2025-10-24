@@ -53,11 +53,24 @@ router.get('/weekly', async (req, res) => {
     }
 
     console.log('Rendering weekly with tasks:', Object.keys(weekTasks).length, 'days');
-    console.log('Timeline data:', timelineData.map(d => ({ date: d.date, taskCount: d.taskCount })));
-    res.render('weekly', { timelineData, weekTasks });
+    console.log('User data:', req.session.user);
+    console.log('Flash messages:', req.session.flash || []);
+
+    // Передаем user и flash для base.ejs
+    res.render('weekly', {
+      timelineData,
+      weekTasks,
+      user: req.session.user,
+      flash: req.session.flash || []
+    });
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
-    res.status(500).render('error', { error: 'Внутренняя ошибка сервера', stack: process.env.NODE_ENV === 'production' ? null : err.stack });
+    res.status(500).render('error', {
+      error: 'Внутренняя ошибка сервера',
+      stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+      user: req.session.user || null,
+      flash: req.session.flash || []
+    });
   }
 });
 

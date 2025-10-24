@@ -24,7 +24,7 @@
     </div>
   </div>
   
-  <!-- Секции по дням с невыполненными задачами -->
+  <!-- Секции по дням с задачами -->
   <div id="weekly-container">
     <% if (weekTasks && typeof weekTasks === 'object') { %>
       <% Object.keys(weekTasks).forEach(function(date) { %>
@@ -39,24 +39,24 @@
             </div>
             <div class="card-body p-0">
               <div class="list-group list-group-flush day-tasks">
-                <% if (weekTasks[date].length === 0) { %>
+                <% if (!weekTasks[date].length) { %>
                   <div class="list-group-item bg-card text-center py-4 text-muted">Нет невыполненных задач</div>
                 <% } else { %>
                   <% weekTasks[date].forEach(function(task) { %>
-                    <div class="list-group-item bg-card task-item priority-<%= task.priority %>">
+                    <div class="list-group-item bg-card task-item priority-<%= task.priority || 'low' %>">
                       <div class="d-flex align-items-start">
                         <div class="custom-checkbox me-3 mt-1">
                           <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)">
                           <label for="task-<%= task.id %>"></label>
                         </div>
                         <div class="flex-grow-1">
-                          <h6 class="mb-1 text-light task-title"><%= task.title %></h6>
+                          <h6 class="mb-1 text-light task-title"><%= task.title || 'Без названия' %></h6>
                           <% if (task.description) { %>
                             <p class="text-muted small mb-2"><%= task.description %></p>
                           <% } %>
                           <div class="d-flex flex-wrap align-items-center mt-2">
-                            <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1">
-                              <%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %>
+                            <span class="badge priority-badge priority-<%= task.priority || 'low' %> me-2 mb-1">
+                              <%= (task.priority || 'low').charAt(0).toUpperCase() + (task.priority || 'low').slice(1) %>
                             </span>
                             <% if (task.tags && typeof task.tags === 'string') { %>
                               <% task.tags.split(',').forEach(function(tag) { %>
@@ -83,7 +83,6 @@
         </div>
       <% }); %>
     <% } else { %>
- start new day
       <p class="text-center text-muted py-5">Нет задач на эту неделю</p>
     <% } %>
   </div>
