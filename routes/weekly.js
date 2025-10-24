@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { models, Op } = require('../index');
+const ejs = require('ejs');  // Добавьте это
+const path = require('path');  // Добавьте это
 
 router.get('/weekly', async (req, res) => {
   if (!req.session.user) {
@@ -61,8 +63,8 @@ router.get('/weekly', async (req, res) => {
     console.log('User data:', req.session.user);
     console.log('Flash messages:', req.session.flash || []);
 
-    res.render('weekly', {
-      body: 'weekly',
+    // Данные для рендеринга (без body: 'weekly')
+    const data = {
       timelineData,
       weekTasks,
       user: req.session.user,
@@ -70,11 +72,21 @@ router.get('/weekly', async (req, res) => {
       weekOffset,
       monday: monday.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' }),
       sunday: sunday.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' })
-    });
+    };
+
+    // Сначала рендерим фрагмент weekly-body.ejs
+    const weeklyContent = await ejs.renderFile(path.join(__dirname, '../views/weekly-body.ejs'), data);
+
+    // Затем вставляем его в base.ejs как body
+    const fullPage = await ejs.renderFile(path.join(__dirname, '../views/base.ejs'), { ...data, body: weeklyContent });
+
+    // Отправляем полный HTML
+    res.send(fullPage);
+
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
+    // Аналогично рендерим error через base, но для простоты оставим как есть
     res.status(500).render('error', {
-      body: 'error',
       error: 'Внутренняя ошибка сервера',
       stack: process.env.NODE_ENV === 'production' ? null : err.stack,
       user: req.session.user || null,
