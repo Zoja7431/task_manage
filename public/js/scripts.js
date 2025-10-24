@@ -733,16 +733,81 @@ function setDate(dateInputId, type) {
     dateInput.value = tomorrow.toISOString().split('T')[0];
   }
 }
-// Weekly Page Scripts
+// Drag-and-drop логика
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('weekly-page')) {
-    // Обновление шкалы (если нужно динамически)
-    const timelineDays = document.querySelectorAll('.timeline-day');
-    timelineDays.forEach(day => {
-      day.addEventListener('click', () => {
-        const date = day.dataset.date;
-        document.querySelector(`.day-section[data-date="${date}"]`)?.scrollIntoView({ behavior: 'smooth' });
+  let draggedTask = null;
+
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.classList.contains('task-item') && e.target.getAttribute('draggable') === 'true') {
+      draggedTask = e.target;
+      e.target.classList.add('dragging');
+      // Создаем оверлей
+      const overlay = document.createElement('div');
+      overlay.className = 'drag-overlay';
+      document.body.appendChild(overlay);
+      // Затемняем все, кроме доступных дней
+      document.querySelectorAll('.day-section:not(.past) .day-tasks').forEach(section => {
+        section.classList.add('drag-target');
       });
-    });
-  }
+    }
+  });
+
+  document.addEventListener('dragend', (e) => {
+    if (e.target.classList.contains('task-item')) {
+      e.target.classList.remove('dragging');
+      document.querySelector('.drag-overlay')?.remove();
+      document.querySelectorAll('.day-tasks').forEach(section => {
+        section.classList.remove('drag-target', 'drag-over');
+      });
+      draggedTask = null;
+    }
+  });
+
+  document.addEventListener('dragover', (e) => {
+    if (draggedTask && e.target.closest('.day-tasks')) {
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('dragenter', (e) => {
+    const target = e.target.closest('.day-tasks');
+    if (draggedTask && target && !target.closest('.day-section.past')) {
+      target.classList.add('drag-over');
+    }
+  });
+
+  document.addEventListener('dragleave', (e) => {
+    const target = e.target.closest('.day-tasks');
+    if (target) {
+      target.classList.remove('drag-over');
+    }
+  });
+
+  document.addEventListener('drop', (e) => {
+    const target = e.target.closest('.day-tasks');
+    if (draggedTask && target && !target.closest('.day-section.past')) {
+      e.preventDefault();
+      const newDate = target.getAttribute('data-date');
+      const taskId = draggedTask.getAttribute('data-task-id');
+
+      fetch(`/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ due_date: newDate })
+      })
+      .then(response => {
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          console.error('Failed to update task date');
+          alert('Ошибка при перемещении задачи');
+        }
+      })
+      .catch(error => {
+        console.error('Error updating task date:', error);
+        alert('Ошибка при перемещении задачи');
+      });
+    }
+  });
 });
+

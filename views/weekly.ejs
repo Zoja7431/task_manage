@@ -1,7 +1,7 @@
 <%- include('base') %>
 <div id="weekly-page" class="container my-4">
   <!-- Навигация по неделям -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 week-nav">
     <a href="/weekly?weekOffset=<%= weekOffset - 1 %>" class="btn btn-outline-light">
       <i class="bi bi-chevron-left"></i> Пред. неделя
     </a>
@@ -37,7 +37,7 @@
   <div id="weekly-container">
     <% if (weekTasks && typeof weekTasks === 'object') { %>
       <% Object.keys(weekTasks).forEach(function(date) { %>
-        <div class="day-section mb-4" data-date="<%= date %>">
+        <div class="day-section mb-4 <%= new Date(date) < new Date() && weekOffset === 0 || weekOffset < 0 ? 'past' : '' %>" data-date="<%= date %>">
           <div class="card bg-card">
             <div class="card-header">
               <h5 class="mb-0 text-light">
@@ -47,12 +47,14 @@
               </h5>
             </div>
             <div class="card-body p-0">
-              <div class="list-group list-group-flush day-tasks">
+              <div class="list-group list-group-flush day-tasks" data-date="<%= date %>">
                 <% if (!weekTasks[date].length) { %>
                   <div class="list-group-item bg-card text-center py-4 text-muted">Нет задач</div>
                 <% } else { %>
                   <% weekTasks[date].forEach(function(task) { %>
-                    <div class="list-group-item bg-card task-item priority-<%= task.priority || 'low' %> <%= task.status === 'completed' ? 'completed' : '' %>">
+                    <div class="list-group-item bg-card task-item priority-<%= task.priority || 'low' %> <%= task.status === 'completed' ? 'completed' : '' %> <%= task.isOverdue ? 'overdue' : '' %>"
+                         data-task-id="<%= task.id %>"
+                         <%= task.status !== 'completed' && (weekOffset > 0 || (weekOffset === 0 && new Date(date) >= new Date())) ? 'draggable="true"' : '' %>>
                       <div class="d-flex align-items-start">
                         <div class="custom-checkbox me-3 mt-1">
                           <input type="checkbox" id="task-<%= task.id %>" <%= task.status === 'completed' ? 'checked' : '' %> onclick="markCompleted('<%= task.id %>', this)">
@@ -76,12 +78,15 @@
                                 <span class="badge tag-badge me-2 mb-1"><%= tag.trim() %></span>
                               <% }); %>
                             <% } %>
+                            <% if (task.isOverdue) { %>
+                              <span class="badge bg-danger me-2 mb-1">Просрочено</span>
+                            <% } %>
                           </div>
                         </div>
                         <div class="dropdown">
                           <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                           <ul class="dropdown-menu dropdown-menu-dark">
-                            <li><a class="dropdown-item" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
+                            <li><a class="dropdown-item" onclick="openEditModal('<%= task.id %>', '<%= task.title %>', '<%= task.description%>', '<%= task.priority%>', '<%= task.due_date %>', '<%= task.tags%>')">Редактировать</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
                           </ul>
@@ -98,5 +103,50 @@
     <% } else { %>
       <p class="text-center text-muted py-5">Нет задач на эту неделю</p>
     <% } %>
+  </div>
+
+  <!-- Модальное окно для редактирования -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">Редактировать задачу</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <input type="hidden" id="editTaskId">
+            <div class="mb-3">
+              <label for="editTaskTitle" class="form-label">Название</label>
+              <input type="text" class="form-control bg-secondary text-light" id="editTaskTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskDescription" class="form-label">Описание</label>
+              <textarea class="form-control bg-secondary text-light" id="editTaskDescription"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskPriority" class="form-label">Приоритет</label>
+              <select class="form-select bg-secondary text-light" id="editTaskPriority">
+                <option value="low">Низкий</option>
+                <option value="medium">Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskDueDate" class="form-label">Дата выполнения</label>
+              <input type="date" class="form-control bg-secondary text-light" id="editTaskDueDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskTags" class="form-label">Теги (через запятую)</label>
+              <input type="text" class="form-control bg-secondary text-light" id="editTaskTags">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
