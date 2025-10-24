@@ -994,26 +994,34 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
 }
 
 .counter-wrapper {
-  display: inline-block;
-  margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    flex-wrap: wrap;
 }
 
-.liveinternet-counter {
-  display: inline-block;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 4px;
-  overflow: hidden;
+.liveinternet-counter,
+.rambler-counter {
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
 }
 
-.liveinternet-counter img {
-  display: block;
-  border: 2px solid transparent;
-  transition: border-color 0.3s ease;
+.liveinternet-counter img,
+.rambler-counter img {
+    display: block;
+    border: none;
 }
 
-.liveinternet-counter:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+.liveinternet-counter:hover,
+.rambler-counter:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary);
 }
 
 .liveinternet-counter:hover img {
@@ -1093,10 +1101,6 @@ html, body {
   flex-grow: 1;
 }
 
-.footer {
-  flex-shrink: 0;
-}
-
 /* Новые стили */
 .day-section.past {
   opacity: 0.6;
@@ -1135,3 +1139,4 @@ html, body {
 .day-section:not(.past) .day-tasks {
   pointer-events: auto;
 }
+
