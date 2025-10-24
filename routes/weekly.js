@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { models, Op } = require('../index'); // Добавляем Op в импорт
+const { models, Op } = require('../index'); // Импортируем models и Op
 
 router.get('/weekly', async (req, res) => {
-  if (!req.session.user) return res.redirect('/welcome');
+  if (!req.session.user) {
+    console.log('No user in session, redirecting to /welcome');
+    return res.redirect('/welcome');
+  }
 
   try {
     const { Task, Tag } = models;
@@ -20,11 +23,13 @@ router.get('/weekly', async (req, res) => {
     const tasks = await Task.findAll({
       where: {
         user_id: userId,
-        status: { [Op.ne]: 'completed' }, // Используем Op напрямую
+        status: { [Op.ne]: 'completed' },
         due_date: { [Op.between]: [monday, sunday] }
       },
       include: [{ model: Tag, through: { attributes: [] } }]
     });
+
+    console.log('Tasks fetched:', tasks ? tasks.length : 0); // Переместили внутрь try
 
     // Группировка по датам
     const weekTasks = {};
@@ -47,12 +52,13 @@ router.get('/weekly', async (req, res) => {
       currentDay.setDate(currentDay.getDate() + 1);
     }
 
+    console.log('Timeline data:', timelineData); // Дополнительное логирование для отладки
+
     res.render('weekly', { timelineData, weekTasks });
   } catch (err) {
-    console.error('Weekly route error:', err);
-    res.status(500).render('error', { error: 'Внутренняя ошибка сервера' });
+    console.error('Weekly route error:', err.message, err.stack);
+    res.status(500).render('error', { error: 'Внутренняя ошибка сервера', stack: process.env.NODE_ENV === 'production' ? null : err.stack });
   }
 });
-console.log('Tasks fetched:', tasks.length);
-console.log('Timeline data:', timelineData);
+
 module.exports = router;
