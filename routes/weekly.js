@@ -74,14 +74,14 @@ router.get('/weekly', async (req, res) => {
       sunday: sunday.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' })
     };
 
-    // Сначала рендерим фрагмент weekly-body.ejs
-    const weeklyContent = await ejs.renderFile(path.join(__dirname, '../views/weekly.ejs'), data);
-
-    // Затем вставляем его в base.ejs как body
-    const fullPage = await ejs.renderFile(path.join(__dirname, '../views/base.ejs'), { ...data, body: weeklyContent });
-
-    // Отправляем полный HTML
-    res.send(fullPage);
+try {
+  const weeklyContent = await ejs.renderFile(path.join(__dirname, '../views/weekly.ejs'), data);
+  const fullPage = await ejs.renderFile(path.join(__dirname, '../views/base.ejs'), { ...data, body: weeklyContent });
+  res.send(fullPage);
+} catch (renderErr) {
+  console.error('Render error:', renderErr);
+  res.status(500).send('Ошибка рендеринга шаблона');
+}
 
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
