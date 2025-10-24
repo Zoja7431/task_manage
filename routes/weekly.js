@@ -62,6 +62,7 @@ router.get('/weekly', async (req, res) => {
     console.log('Flash messages:', req.session.flash || []);
 
     res.render('weekly', {
+      body: 'weekly',
       timelineData,
       weekTasks,
       user: req.session.user,
