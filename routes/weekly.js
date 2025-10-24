@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { models } = require('../index'); // Из вашего index.js
+const { models, Op } = require('../index'); // Добавляем Op в импорт
 
 router.get('/weekly', async (req, res) => {
   if (!req.session.user) return res.redirect('/welcome');
@@ -20,8 +20,8 @@ router.get('/weekly', async (req, res) => {
     const tasks = await Task.findAll({
       where: {
         user_id: userId,
-        status: { [models.Sequelize.Op.ne]: 'completed' },
-        due_date: { [models.Sequelize.Op.between]: [monday, sunday] }
+        status: { [Op.ne]: 'completed' }, // Используем Op напрямую
+        due_date: { [Op.between]: [monday, sunday] }
       },
       include: [{ model: Tag, through: { attributes: [] } }]
     });
@@ -49,9 +49,10 @@ router.get('/weekly', async (req, res) => {
 
     res.render('weekly', { timelineData, weekTasks });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error('Weekly route error:', err);
+    res.status(500).render('error', { error: 'Внутренняя ошибка сервера' });
   }
 });
-
+console.log('Tasks fetched:', tasks.length);
+console.log('Timeline data:', timelineData);
 module.exports = router;

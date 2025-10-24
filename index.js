@@ -33,7 +33,7 @@ const models = require('./models')(sequelize);
 console.log('Models loaded:', Object.keys(models));
 
 // Экспорт sequelize и моделей для маршрутов
-module.exports = { sequelize, models };
+module.exports = { sequelize, models, Op };
 
 // Логирование с Winston
 const logger = winston.createLogger({
