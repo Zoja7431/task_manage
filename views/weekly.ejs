@@ -1,5 +1,4 @@
-<%- include('base') %>
-<!-- УБРАЛИ класс container - он уже есть в base.ejs -->
+<%- include('base', { body:`
 <div id="weekly-page">
   <!-- Навигация по неделям -->
   <div class="d-flex justify-content-between align-items-center mb-4 week-nav">
@@ -151,3 +150,4 @@
     </div>
   </div>
 </div>
+`}) %>
