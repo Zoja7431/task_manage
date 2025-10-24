@@ -1,84 +1,87 @@
-<%- include('base', { body: `
-  <div id="weekly-page" class="container my-4">
-    <h2 class="mb-4 text-light">Недельный обзор</h2>
-    
-    <!-- Временная шкала -->
-    <div class="timeline-container mb-4">
-      <div class="timeline d-flex justify-content-between">
-        <% if (typeof timelineData !== 'undefined' && timelineData) { %>
-          <% timelineData.forEach(day => { %>
-            <div class="timeline-day <%= day.isPast ? 'past' : '' %> <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
-              <div class="timeline-day-header">
-                <div class="day-name"><%= day.dayName %></div>
-                <div class="day-number"><%= day.dayNumber %></div>
-              </div>
-              <div class="timeline-day-content">
-                <div class="task-count"><%= day.taskCount %> невыполненных</div>
-                <div class="timeline-bar"></div>
-              </div>
+<%- include('base') %>
+<div id="weekly-page" class="container my-4">
+  <h2 class="mb-4 text-light">Недельный обзор</h2>
+  
+  <!-- Временная шкала -->
+  <div class="timeline-container mb-4">
+    <div class="timeline d-flex justify-content-between">
+      <% if (typeof timelineData !== 'undefined' && timelineData) { %>
+        <% timelineData.forEach(day => { %>
+          <div class="timeline-day <%= day.isPast ? 'past' : '' %> <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
+            <div class="timeline-day-header">
+              <div class="day-name"><%= day.dayName %></div>
+              <div class="day-number"><%= day.dayNumber %></div>
             </div>
-          <% }) %>
-        <% } else { %>
-          <p class="text-muted">Нет данных для шкалы</p>
-        <% } %>
-      </div>
-    </div>
-    
-    <!-- Секции по дням с невыполненными задачами -->
-    <div id="weekly-container">
-      <% if (typeof weekTasks !== 'undefined' && weekTasks) { %>
-        <% for (const date in weekTasks) { %>
-          <div class="day-section mb-4" data-date="<%= date %>">
-            <div class="card bg-card">
-              <div class="card-header">
-                <h5 class="mb-0 text-light">
-                  <i class="bi bi-calendar3 me-2"></i>
-                  <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
-                  <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
-                </h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="list-group list-group-flush day-tasks">
-                  <% if (weekTasks[date].length === 0) { %>
-                    <div class="list-group-item bg-card text-center py-4 text-muted">Нет невыполненных задач</div>
-                  <% } else { %>
-                    <% weekTasks[date].forEach(task => { %>
-                      <div class="list-group-item bg-card task-item priority-<%= task.priority %>">
-                        <div class="d-flex align-items-start">
-                          <div class="custom-checkbox me-3 mt-1">
-                            <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)">
-                            <label for="task-<%= task.id %>"></label>
-                          </div>
-                          <div class="flex-grow-1">
-                            <h6 class="mb-1 text-light task-title"><%= task.title %></h6>
-                            <% if (task.description) { %><p class="text-muted small mb-2"><%= task.description %></p><% } %>
-                            <div class="d-flex flex-wrap align-items-center mt-2">
-                              <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
-                              <% if (task.tags) { %>
-                                <%= task.tags.split(',').map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>`).join('') %>
-                              <% } %>
-                            </div>
-                          </div>
-                          <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                              <li><a class="dropdown-item" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
-                              <li><hr class="dropdown-divider"></li>
-                              <li><a class="dropdown-item text-danger" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    <% }) %>
-                  <% } %>
-                </div>
-              </div>
+            <div class="timeline-day-content">
+              <div class="task-count"><%= day.taskCount %> невыполненных</div>
+              <div class="timeline-bar"></div>
             </div>
           </div>
         <% }) %>
       <% } else { %>
-        <p class="text-center text-muted py-5">Нет задач на эту неделю</p>
+        <p class="text-muted">Нет данных для шкалы</p>
       <% } %>
     </div>
   </div>
-` }) %>
+  
+  <!-- Секции по дням с невыполненными задачами -->
+  <div id="weekly-container">
+    <% if (typeof weekTasks !== 'undefined' && weekTasks) { %>
+      <% for (const date in weekTasks) { %>
+        <div class="day-section mb-4" data-date="<%= date %>">
+          <div class="card bg-card">
+            <div class="card-header">
+              <h5 class="mb-0 text-light">
+                <i class="bi bi-calendar3 me-2"></i>
+                <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
+                <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="list-group list-group-flush day-tasks">
+                <% if (weekTasks[date].length === 0) { %>
+                  <div class="list-group-item bg-card text-center py-4 text-muted">Нет невыполненных задач</div>
+                <% } else { %>
+                  <% weekTasks[date].forEach(task => { %>
+                    <div class="list-group-item bg-card task-item priority-<%= task.priority %>">
+                      <div class="d-flex align-items-start">
+                        <div class="custom-checkbox me-3 mt-1">
+                          <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)">
+                          <label for="task-<%= task.id %>"></label>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1 text-light task-title"><%= task.title %></h6>
+                          <% if (task.description) { %>
+                            <p class="text-muted small mb-2"><%= task.description %></p>
+                          <% } %>
+                          <div class="d-flex flex-wrap align-items-center mt-2">
+                            <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
+                            <% if (task.tags) { %>
+                              <% task.tags.split(',').forEach(tag => { %>
+                                <span class="badge tag-badge me-2 mb-1"><%= tag.trim() %></span>
+                              <% }) %>
+                            <% } %>
+                          </div>
+                        </div>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                          <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="text-center text-muted py-5">Нет задач на эту неделю</p>
+    <% } %>
+  </div>
+</div>

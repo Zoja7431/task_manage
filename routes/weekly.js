@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { models, Op } = require('../index'); // Импортируем models и Op
+const { models, Op } = require('../index');
 
 router.get('/weekly', async (req, res) => {
   if (!req.session.user) {
@@ -15,7 +15,7 @@ router.get('/weekly', async (req, res) => {
     // Вычисление недели (понедельник - воскресенье)
     const today = new Date();
     const monday = new Date(today);
-    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1)); // Понедельник
+    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1));
     const sunday = new Date(monday);
     sunday.setDate(sunday.getDate() + 6);
 
@@ -29,7 +29,7 @@ router.get('/weekly', async (req, res) => {
       include: [{ model: Tag, through: { attributes: [] } }]
     });
 
-    console.log('Tasks fetched:', tasks ? tasks.length : 0); // Переместили внутрь try
+    console.log('Tasks fetched:', tasks ? tasks.length : 0);
 
     // Группировка по датам
     const weekTasks = {};
@@ -52,8 +52,7 @@ router.get('/weekly', async (req, res) => {
       currentDay.setDate(currentDay.getDate() + 1);
     }
 
-    console.log('Timeline data:', timelineData); // Дополнительное логирование для отладки
-
+    console.log('Rendering weekly with tasks:', Object.keys(weekTasks).length, 'days');
     res.render('weekly', { timelineData, weekTasks });
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
