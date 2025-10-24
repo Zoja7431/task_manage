@@ -1045,3 +1045,18 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Weekly Timeline Updates */
+.timeline-container { overflow-x: auto; padding: 1rem 0; }
+.timeline { display: flex; gap: 1rem; min-width: max-content; }
+.timeline-day { flex: 1; min-width: 100px; background: var(--bg-card); border-radius: 8px; padding: 1rem; text-align: center; transition: transform 0.2s; }
+.timeline-day:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.timeline-day.today { border: 2px solid var(--primary); }
+.timeline-day.past { opacity: 0.6; filter: grayscale(50%); }
+.timeline-day.intensity-empty .timeline-bar::after { width: 0%; background: transparent; }
+.timeline-day.intensity-low .timeline-bar::after { width: 33%; background: var(--priority-low); }
+.timeline-day.intensity-medium .timeline-bar::after { width: 66%; background: var(--priority-medium); }
+.timeline-day.intensity-high .timeline-bar::after { width: 100%; background: var(--priority-high); }
+.timeline-bar { height: 4px; background: var(--bg-dark); border-radius: 2px; position: relative; overflow: hidden; }
+.timeline-bar::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; transition: width 0.3s; }
+.day-section .card-header { background: var(--bg-card); border-bottom: 1px solid #4a4a4a; }

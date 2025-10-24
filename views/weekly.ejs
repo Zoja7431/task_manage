@@ -1,482 +1,84 @@
-<%- include('base', { body:`
-    <div id="weekly-page">
-      <!-- Статистика -->
-      <div class="row mb-4">
-        <div class="col-md-4">
-          <div class="card bg-card stats-card">
-            <div class="card-body text-center">
-              <h3 class="text-primary"><%= typeof stats !== 'undefined' ? stats.total : 0 %></h3>
-<p class="text-muted mb-0">Всего задач</p>
-</div>
-</div>
-</div>
-<div class="col-md-4">
-  <div class="card bg-card stats-card">
-    <div class="card-body text-center">
-      <h3 class="text-success"><%= typeof stats !== 'undefined' ? stats.completed : 0 %></h3>
-      <p class="text-muted mb-0">Завершено</p>
-    </div>
-  </div>
-</div>
-<div class="col-md-4">
-  <div class="card bg-card stats-card">
-    <div class="card-body text-center">
-      <h3 class="text-warning"><%= typeof stats !== 'undefined' ? stats.planned : 0 %></h3>
-      <p class="text-muted mb-0">Запланировано</p>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- Заголовок и фильтры -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0">Недельный обзор</h2>
-  <div class="d-flex gap-2">
-    <form method="GET" action="/weekly">
-      <select class="form-select form-select-sm bg-card text-light" name="status" onchange="this.form.submit()">
-        <option value="" <%= !statusFilter ? 'selected' : '' %>>Все статусы</option>
-        <option value="in_progress" <%= statusFilter === 'in_progress' ? 'selected' : '' %>>В процессе</option>
-        <option value="completed" <%= statusFilter === 'completed' ? 'selected' : '' %>>Завершено</option>
-      </select>
-    </form>
-    <button class="btn btn-outline-primary btn-sm" onclick="toggleUnsortedWindow()">
-      <i class="bi bi-list-ul me-1"></i>Задачи без даты
-    </button>
-  </div>
-</div>
-
-<!-- Временная шкала -->
-<div class="timeline-container mb-4">
-  <div class="timeline">
-    <% if (typeof timelineData !== 'undefined' && timelineData) { %>
-    <% timelineData.forEach(day => { %>
-    <div class="timeline-day <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
-      <div class="timeline-day-header">
-        <div class="day-name"><%= day.dayName %></div>
-        <div class="day-number"><%= day.dayNumber %></div>
-      </div>
-      <div class="timeline-day-content">
-        <div class="task-count"><%= day.taskCount %> задач</div>
-        <div class="timeline-bar"></div>
-      </div>
-    </div>
-    <% }) %>
-    <% } else { %>
-    <!-- Fallback если timelineData не передана -->
-    <div class="timeline-day intensity-empty" data-date="<%= today.toISOString().split('T')[0] %>">
-      <div class="timeline-day-header">
-        <div class="day-name">Сегодня</div>
-        <div class="day-number"><%= today.getDate() %></div>
-      </div>
-      <div class="timeline-day-content">
-        <div class="task-count">0 задач</div>
-        <div class="timeline-bar"></div>
-      </div>
-    </div>
-    <% } %>
-  </div>
-</div>
-
-<!-- Детали задач по дням -->
-<div id="weekly-container">
-  <% if (typeof weekTasks !== 'undefined' && weekTasks) { %>
-  <% for (const date in weekTasks) { %>
-  <div class="day-section mb-4" data-date="<%= date %>">
-    <div class="card">
-      <div class="card-header bg-card">
-        <h5 class="mb-0 text-light">
-          <i class="bi bi-calendar3 me-2"></i>
-          <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
-          <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
-        </h5>
-      </div>
-      <div class="card-body p-0">
-        <div class="list-group list-group-flush day-tasks" data-date="<%= date %>">
-          <% if (weekTasks[date].length === 0) { %>
-          <div class="list-group-item bg-card text-center py-4">
-            <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-            <p class="text-muted mt-2 mb-0">Нет задач на этот день</p>
-          </div>
-          <% } else { %>
-          <% for (let i = 0; i < weekTasks[date].length; i++) { %>
-          <% const task = weekTasks[date][i]; %>
-          <div class="list-group-item bg-card task-item <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %> <%= task.status === 'completed' ? 'task-completed' : '' %>" draggable="true" data-task-id="<%= task.id %>" data-due-date="<%= task.due_date %>">
-            <div class="d-flex align-items-start">
-              <div class="custom-checkbox me-3 mt-1">
-                <input type="checkbox" id="weekly-task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
-                <label for="weekly-task-<%= task.id %>"></label>
+<%- include('base', { body: `
+  <div id="weekly-page" class="container my-4">
+    <h2 class="mb-4 text-light">Недельный обзор</h2>
+    
+    <!-- Временная шкала -->
+    <div class="timeline-container mb-4">
+      <div class="timeline d-flex justify-content-between">
+        <% if (typeof timelineData !== 'undefined' && timelineData) { %>
+          <% timelineData.forEach(day => { %>
+            <div class="timeline-day <%= day.isPast ? 'past' : '' %> <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
+              <div class="timeline-day-header">
+                <div class="day-name"><%= day.dayName %></div>
+                <div class="day-number"><%= day.dayNumber %></div>
               </div>
-              <div class="flex-grow-1">
-                <h6 class="mb-1 text-light <%= task.status === 'completed' ? 'task-title text-decoration-line-through text-muted' : '' %>"><%= task.title %></h6>
-                <% if (task.description) { %>
-                <p class="text-muted small mb-2"><%= task.description %></p>
-                <% } %>
-                <div class="d-flex flex-wrap align-items-center mt-2">
-                  <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
-                  <% if (task.Tags && task.Tags.length > 0) { %>
-                  <% for (let j = 0; j < task.Tags.length; j++) { %>
-                  <% const tag = task.Tags[j]; %>
-                  <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
-                  <% } %>
-                  <% } %>
-                  <% if (task.due_date) { %>
-                  <% 
-                                    try {
-                                      const dueDate = new Date(task.due_date);
-                                      const hours = dueDate.getHours();
-                                      const minutes = dueDate.getMinutes();
-                                      const timeStr = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-                                      if (timeStr !== '00:00') { %>
-                  <span class="badge date-badge me-2 mb-1"><i class="bi bi-clock me-1"></i><%= timeStr %></span>
-                  <% }
-                                    } catch (e) {
-                                      console.error('Date parsing error:', e);
-                                    } %>
-                  <% } %>
-                </div>
-              </div>
-              <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                  <i class="bi bi-three-dots"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                  <li><a class="dropdown-item" href="#" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
-                </ul>
+              <div class="timeline-day-content">
+                <div class="task-count"><%= day.taskCount %> невыполненных</div>
+                <div class="timeline-bar"></div>
               </div>
             </div>
-          </div>
-          <% } %>
-          <% } %>
-        </div>
-      </div>
-    </div>
-  </div>
-  <% } %>
-  <% } else { %>
-  <div class="text-center py-5">
-    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-    <p class="text-muted mt-3">Нет данных для отображения</p>
-  </div>
-  <% } %>
-</div>
-
-<!-- Предстоящие задачи -->
-<% if (typeof upcomingTasks !== 'undefined' && upcomingTasks && upcomingTasks.length > 0) { %>
-<div class="upcoming-tasks mb-4">
-  <div class="card">
-    <div class="card-header bg-card">
-      <h5 class="mb-0 text-light">
-        <i class="bi bi-calendar-plus me-2"></i>Предстоящие задачи
-      </h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="list-group list-group-flush">
-        <% for (let i = 0; i < upcomingTasks.length; i++) { %>
-        <% const task = upcomingTasks[i]; %>
-        <div class="list-group-item bg-card <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %>">
-          <div class="d-flex align-items-start">
-            <div class="custom-checkbox me-3 mt-1">
-              <input type="checkbox" id="upcoming-task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
-              <label for="upcoming-task-<%= task.id %>"></label>
-            </div>
-            <div class="flex-grow-1">
-              <h6 class="mb-1 text-light"><%= task.title %></h6>
-              <div class="d-flex flex-wrap align-items-center mt-2">
-                <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
-                <span class="badge date-badge me-2 mb-1">
-                  <i class="bi bi-calendar me-1"></i>
-                  <%= new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) %>
-                </span>
-                <% if (task.Tags && task.Tags.length > 0) { %>
-                <% for (let j = 0; j < task.Tags.length; j++) { %>
-                <% const tag = task.Tags[j]; %>
-                <span class="badge tag-badge me-2 mb-1"><%= tag.name %></span>
-                <% } %>
-                <% } %>
-              </div>
-            </div>
-          </div>
-        </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-muted">Нет данных для шкалы</p>
         <% } %>
       </div>
     </div>
-  </div>
-</div>
-<% } %>
-
-<!-- Плавающее окно для задач без даты -->
-<div id="unsorted-window" class="unsorted-window" style="display: none;">
-  <div class="unsorted-header">
-    <h6 class="mb-0 text-light">
-      <i class="bi bi-list-ul me-2"></i>Задачи без даты
-      <span class="badge bg-primary ms-2" id="unsorted-count"><%= typeof unsortedTasks !== 'undefined' && unsortedTasks ? unsortedTasks.length : 0 %></span>
-    </h6>
-    <div class="unsorted-controls">
-      <button class="btn btn-sm btn-outline-secondary" onclick="minimizeUnsortedWindow()">
-        <i class="bi bi-dash"></i>
-      </button>
-      <button class="btn btn-sm btn-outline-danger" onclick="closeUnsortedWindow()">
-        <i class="bi bi-x"></i>
-      </button>
-    </div>
-  </div>
-  <div class="unsorted-content" id="unsorted-content">
-    <% if (typeof unsortedTasks !== 'undefined' && unsortedTasks && unsortedTasks.length > 0) { %>
-    <div class="unsorted-tasks">
-      <% for (let i = 0; i < unsortedTasks.length; i++) { %>
-      <% const task = unsortedTasks[i]; %>
-      <div class="unsorted-task-item <%= task.priority === 'high' ? 'priority-high' : task.priority === 'medium' ? 'priority-medium' : 'priority-low' %>" draggable="true" data-task-id="<%= task.id %>">
-        <div class="d-flex align-items-start">
-          <div class="custom-checkbox me-2">
-            <input type="checkbox" id="unsorted-task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)" <%= task.status === 'completed' ? 'checked' : '' %>>
-            <label for="unsorted-task-<%= task.id %>"></label>
-          </div>
-          <div class="flex-grow-1">
-            <h6 class="mb-1 text-light"><%= task.title %></h6>
-            <div class="d-flex flex-wrap align-items-center">
-              <span class="badge priority-badge priority-<%= task.priority %> me-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
-              <% if (task.Tags && task.Tags.length > 0) { %>
-              <% for (let j = 0; j < task.Tags.length; j++) { %>
-              <% const tag = task.Tags[j]; %>
-              <span class="badge tag-badge me-1"><%= tag.name %></span>
-              <% } %>
-              <% } %>
+    
+    <!-- Секции по дням с невыполненными задачами -->
+    <div id="weekly-container">
+      <% if (typeof weekTasks !== 'undefined' && weekTasks) { %>
+        <% for (const date in weekTasks) { %>
+          <div class="day-section mb-4" data-date="<%= date %>">
+            <div class="card bg-card">
+              <div class="card-header">
+                <h5 class="mb-0 text-light">
+                  <i class="bi bi-calendar3 me-2"></i>
+                  <%= new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' }) %>
+                  <span class="badge bg-primary ms-2"><%= weekTasks[date].length %></span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush day-tasks">
+                  <% if (weekTasks[date].length === 0) { %>
+                    <div class="list-group-item bg-card text-center py-4 text-muted">Нет невыполненных задач</div>
+                  <% } else { %>
+                    <% weekTasks[date].forEach(task => { %>
+                      <div class="list-group-item bg-card task-item priority-<%= task.priority %>">
+                        <div class="d-flex align-items-start">
+                          <div class="custom-checkbox me-3 mt-1">
+                            <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)">
+                            <label for="task-<%= task.id %>"></label>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="mb-1 text-light task-title"><%= task.title %></h6>
+                            <% if (task.description) { %><p class="text-muted small mb-2"><%= task.description %></p><% } %>
+                            <div class="d-flex flex-wrap align-items-center mt-2">
+                              <span class="badge priority-badge priority-<%= task.priority %> me-2 mb-1"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span>
+                              <% if (task.tags) { %>
+                                <%= task.tags.split(',').map(tag => `<span class="badge tag-badge me-2 mb-1">${tag.trim()}</span>`).join('') %>
+                              <% } %>
+                            </div>
+                          </div>
+                          <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                              <li><a class="dropdown-item" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li><a class="dropdown-item text-danger" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } %>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-              <i class="bi bi-three-dots"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark">
-              <li><a class="dropdown-item" href="#" onclick="openEditModal('<%= task.id %>')">Редактировать</a></li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('<%= task.id %>', this)">Удалить</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
+        <% }) %>
+      <% } else { %>
+        <p class="text-center text-muted py-5">Нет задач на эту неделю</p>
       <% } %>
     </div>
-    <% } else { %>
-    <p class="text-muted text-center mt-3">Нет задач без даты</p>
-    <% } %>
   </div>
-</div>
-</div>
-
-<!-- Модальное окно редактирования -->
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content bg-card">
-      <div class="modal-header">
-        <h5 class="modal-title text-light">Редактировать задачу</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="editTaskForm">
-          <input type="hidden" id="editTaskId">
-          <div class="mb-3">
-            <label for="editTitle" class="form-label text-light">Название</label>
-            <input type="text" class="form-control bg-card text-light" id="editTitle" required>
-          </div>
-          <div class="mb-3">
-            <label for="editDescription" class="form-label text-light">Описание</label>
-            <textarea class="form-control bg-card text-light" id="editDescription" rows="3"></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="editDueDate" class="form-label text-light">Дата выполнения</label>
-            <input type="date" class="form-control bg-card text-light" id="editDueDate">
-          </div>
-          <div class="mb-3">
-            <label for="editDueTime" class="form-label text-light">Время выполнения</label>
-            <input type="time" class="form-control bg-card text-light" id="editDueTime">
-          </div>
-          <div class="mb-3">
-            <label for="editPriority" class="form-label text-light">Приоритет</label>
-            <select class="form-select bg-card text-light" id="editPriority">
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="editTags" class="form-label text-light">Теги (через запятую)</label>
-            <input type="text" class="form-control bg-card text-light" id="editTags" placeholder="работа, срочно">
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">Сохранить</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Drag and Drop для задач
-  document.addEventListener('DOMContentLoaded', function() {
-    const taskItems = document.querySelectorAll('.task-item[draggable="true"]');
-    const daySections = document.querySelectorAll('.day-tasks');
-
-    taskItems.forEach(task => {
-      task.addEventListener('dragstart', function(e) {
-        e.dataTransfer.setData('text/plain', this.dataset.taskId);
-        this.style.opacity = '0.5';
-      });
-
-      task.addEventListener('dragend', function(e) {
-        this.style.opacity = '1';
-      });
-    });
-
-    daySections.forEach(day => {
-      day.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('drag-over');
-      });
-
-      day.addEventListener('dragleave', function(e) {
-        this.classList.remove('drag-over');
-      });
-
-      day.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('drag-over');
-
-        const taskId = e.dataTransfer.getData('text/plain');
-        const newDate = this.dataset.date;
-
-        if (taskId && newDate) {
-          updateTaskDate(taskId, newDate);
-        }
-      });
-    });
-
-    // Обновление временной шкалы
-    updateTimeline();
-  });
-
-  function updateTaskDate(taskId, newDate) {
-    fetch('/api/task/' + taskId + '/date', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'due_date=' + newDate + '&due_time=00:00'
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert('Ошибка при обновлении даты задачи');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Ошибка при обновлении даты задачи');
-      });
-  }
-
-  function updateTimeline() {
-    const timelineDays = document.querySelectorAll('.timeline-day');
-
-    timelineDays.forEach(day => {
-      const date = day.dataset.date;
-      const dayTasks = document.querySelector('[data-date="' + date + '"] .day-tasks');
-      const taskCount = dayTasks ? dayTasks.children.length : 0;
-      const intensity = taskCount === 0 ? 'empty' : taskCount <= 2 ? 'low' : taskCount <= 4 ? 'medium' : 'high';
-
-      day.className = 'timeline-day intensity-' + intensity;
-      if (date === new Date().toISOString().split('T')[0]) {
-        day.classList.add('today');
-      }
-
-      const taskCountElement = day.querySelector('.task-count');
-      if (taskCountElement) {
-        taskCountElement.textContent = taskCount + ' задач';
-      }
-    });
-  }
-
-  // Управление окном задач без даты
-  let isUnsortedMinimized = false;
-  let isUnsortedDragging = false;
-  let currentX = 0;
-  let currentY = 0;
-  let initialX = 0;
-  let initialY = 0;
-  let xOffset = 0;
-  let yOffset = 0;
-
-  function toggleUnsortedWindow() {
-    const window = document.getElementById('unsorted-window');
-    window.style.display = window.style.display === 'none' ? 'block' : 'block';
-  }
-
-  function minimizeUnsortedWindow() {
-    const window = document.getElementById('unsorted-window');
-    const content = document.getElementById('unsorted-content');
-
-    if (isUnsortedMinimized) {
-      content.style.display = 'block';
-      window.style.height = 'auto';
-      isUnsortedMinimized = false;
-    } else {
-      content.style.display = 'none';
-      window.style.height = '60px';
-      isUnsortedMinimized = true;
-    }
-  }
-
-  function closeUnsortedWindow() {
-    document.getElementById('unsorted-window').style.display = 'none';
-  }
-
-  // Drag для окна задач без даты
-  document.addEventListener('DOMContentLoaded', function() {
-    const window = document.getElementById('unsorted-window');
-    const header = window.querySelector('.unsorted-header');
-
-    header.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
-    function dragStart(e) {
-      if (e.target.closest('.unsorted-controls')) return;
-
-      isUnsortedDragging = true;
-      initialX = e.clientX - xOffset;
-      initialY = e.clientY - yOffset;
-
-      window.style.cursor = 'grabbing';
-    }
-
-    function drag(e) {
-      if (isUnsortedDragging) {
-        e.preventDefault();
-
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-
-        xOffset = currentX;
-        yOffset = currentY;
-
-        window.style.transform = 'translate(' + currentX + 'px, ' + currentY + 'px)';
-      }
-    }
-
-    function dragEnd(e) {
-      isUnsortedDragging = false;
-      window.style.cursor = 'grab';
-    }
-  });
-</script>
 ` }) %>

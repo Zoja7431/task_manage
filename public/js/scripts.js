@@ -733,3 +733,16 @@ function setDate(dateInputId, type) {
     dateInput.value = tomorrow.toISOString().split('T')[0];
   }
 }
+// Weekly Page Scripts
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('weekly-page')) {
+    // Обновление шкалы (если нужно динамически)
+    const timelineDays = document.querySelectorAll('.timeline-day');
+    timelineDays.forEach(day => {
+      day.addEventListener('click', () => {
+        const date = day.dataset.date;
+        document.querySelector(`.day-section[data-date="${date}"]`)?.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  }
+});
