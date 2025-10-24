@@ -75,7 +75,7 @@ router.get('/weekly', async (req, res) => {
     };
 
     // Сначала рендерим фрагмент weekly-body.ejs
-    const weeklyContent = await ejs.renderFile(path.join(__dirname, '../views/weekly-body.ejs'), data);
+    const weeklyContent = await ejs.renderFile(path.join(__dirname, '../views/weekly.ejs'), data);
 
     // Затем вставляем его в base.ejs как body
     const fullPage = await ejs.renderFile(path.join(__dirname, '../views/base.ejs'), { ...data, body: weeklyContent });
