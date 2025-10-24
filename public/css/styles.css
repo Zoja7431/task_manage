@@ -1060,3 +1060,38 @@ input[type="time"].date-picker::-webkit-datetime-edit-ampm-field {
 .timeline-bar { height: 4px; background: var(--bg-dark); border-radius: 2px; position: relative; overflow: hidden; }
 .timeline-bar::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; transition: width 0.3s; }
 .day-section .card-header { background: var(--bg-card); border-bottom: 1px solid #4a4a4a; }
+
+
+/* Новые стили для выполненных задач */
+.task-item.completed {
+  opacity: 0.7;
+}
+
+.task-item.completed .task-title,
+.task-item.completed p {
+  text-decoration: line-through;
+}
+
+/* Стили для навигации по неделям */
+.week-nav .btn-outline-light {
+  border-color: #f8f9fa;
+  color: #f8f9fa;
+}
+
+.week-nav .btn-outline-light:hover {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+/* Обеспечиваем, чтобы футер был внизу */
+html, body {
+  height: 100%;
+}
+
+.container.my-4 {
+  flex-grow: 1;
+}
+
+.footer {
+  flex-shrink: 0;
+}

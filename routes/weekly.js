@@ -11,19 +11,19 @@ router.get('/weekly', async (req, res) => {
   try {
     const { Task, Tag } = models;
     const userId = req.session.user.id;
+    const weekOffset = parseInt(req.query.weekOffset || '0', 10); // Получаем смещение недели из query
 
-    // Вычисление недели (понедельник - воскресенье)
+    // Вычисление текущей недели с учетом смещения
     const today = new Date();
     const monday = new Date(today);
-    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1));
+    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1) + weekOffset * 7);
     const sunday = new Date(monday);
     sunday.setDate(sunday.getDate() + 6);
 
-    // Невыполненные задачи на неделю
+    // Получаем все задачи (включая completed)
     const tasks = await Task.findAll({
       where: {
         user_id: userId,
-        status: { [Op.ne]: 'completed' },
         due_date: { [Op.between]: [monday, sunday] }
       },
       include: [{ model: Tag, through: { attributes: [] } }]
@@ -46,8 +46,8 @@ router.get('/weekly', async (req, res) => {
         dayNumber: currentDay.getDate(),
         taskCount,
         intensity,
-        isToday: dateStr === today.toISOString().split('T')[0],
-        isPast: currentDay < today
+        isToday: dateStr === today.toISOString().split('T')[0] && weekOffset === 0,
+        isPast: currentDay < today && weekOffset === 0
       });
       currentDay.setDate(currentDay.getDate() + 1);
     }
@@ -56,13 +56,15 @@ router.get('/weekly', async (req, res) => {
     console.log('User data:', req.session.user);
     console.log('Flash messages:', req.session.flash || []);
 
-    // Передаем все необходимые данные
     res.render('weekly', {
-      body: 'weekly', // Явно указываем body для base.ejs
+      body: 'weekly',
       timelineData,
       weekTasks,
       user: req.session.user,
-      flash: req.session.flash || []
+      flash: req.session.flash || [],
+      weekOffset,
+      monday: monday.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' }),
+      sunday: sunday.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' })
     });
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);

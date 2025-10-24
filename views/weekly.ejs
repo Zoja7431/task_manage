@@ -1,9 +1,15 @@
 <%- include('base') %>
 <div id="weekly-page" class="container my-4">
-  <h2 class="mb-4 text-light">Недельный обзор</h2>
-  
-  <!-- Отладочный вывод -->
-  <% console.log('Rendering weekly.ejs', { user: user, flash: flash, timelineData: timelineData ? timelineData.length : 0, weekTasks: weekTasks ? Object.keys(weekTasks).length : 0 }); %>
+  <!-- Навигация по неделям -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="/weekly?weekOffset=<%= weekOffset - 1 %>" class="btn btn-outline-light">
+      <i class="bi bi-chevron-left"></i> Пред. неделя
+    </a>
+    <span class="text-light"><%= monday %> - <%= sunday %></span>
+    <a href="/weekly?weekOffset=<%= weekOffset + 1 %>" class="btn btn-outline-light">
+      След. неделя <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
   
   <!-- Временная шкала -->
   <div class="timeline-container mb-4">
@@ -16,7 +22,7 @@
               <div class="day-number"><%= day.dayNumber %></div>
             </div>
             <div class="timeline-day-content">
-              <div class="task-count"><%= day.taskCount %> невыполненных</div>
+              <div class="task-count"><%= day.taskCount %> задач</div>
               <div class="timeline-bar"></div>
             </div>
           </div>
@@ -43,19 +49,23 @@
             <div class="card-body p-0">
               <div class="list-group list-group-flush day-tasks">
                 <% if (!weekTasks[date].length) { %>
-                  <div class="list-group-item bg-card text-center py-4 text-muted">Нет невыполненных задач</div>
+                  <div class="list-group-item bg-card text-center py-4 text-muted">Нет задач</div>
                 <% } else { %>
                   <% weekTasks[date].forEach(function(task) { %>
-                    <div class="list-group-item bg-card task-item priority-<%= task.priority || 'low' %>">
+                    <div class="list-group-item bg-card task-item priority-<%= task.priority || 'low' %> <%= task.status === 'completed' ? 'completed' : '' %>">
                       <div class="d-flex align-items-start">
                         <div class="custom-checkbox me-3 mt-1">
-                          <input type="checkbox" id="task-<%= task.id %>" onclick="markCompleted('<%= task.id %>', this)">
+                          <input type="checkbox" id="task-<%= task.id %>" <%= task.status === 'completed' ? 'checked' : '' %> onclick="markCompleted('<%= task.id %>', this)">
                           <label for="task-<%= task.id %>"></label>
                         </div>
                         <div class="flex-grow-1">
-                          <h6 class="mb-1 text-light task-title"><%= task.title || 'Без названия' %></h6>
+                          <h6 class="mb-1 text-light task-title <%= task.status === 'completed' ? 'text-decoration-line-through' : '' %>">
+                            <%= task.title || 'Без названия' %>
+                          </h6>
                           <% if (task.description) { %>
-                            <p class="text-muted small mb-2"><%= task.description %></p>
+                            <p class="text-muted small mb-2 <%= task.status === 'completed' ? 'text-decoration-line-through' : '' %>">
+                              <%= task.description %>
+                            </p>
                           <% } %>
                           <div class="d-flex flex-wrap align-items-center mt-2">
                             <span class="badge priority-badge priority-<%= task.priority || 'low' %> me-2 mb-1">
