@@ -53,6 +53,7 @@ router.get('/weekly', async (req, res) => {
     }
 
     console.log('Rendering weekly with tasks:', Object.keys(weekTasks).length, 'days');
+    console.log('Timeline data:', timelineData.map(d => ({ date: d.date, taskCount: d.taskCount })));
     res.render('weekly', { timelineData, weekTasks });
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
