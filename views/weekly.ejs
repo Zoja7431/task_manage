@@ -1,5 +1,6 @@
 <%- include('base') %>
-<div id="weekly-page" class="container my-4">
+<!-- УБРАЛИ класс container my-4 - он уже есть в base.ejs -->
+<div id="weekly-page">
   <!-- Навигация по неделям -->
   <div class="d-flex justify-content-between align-items-center mb-4 week-nav">
     <a href="/weekly?weekOffset=<%= weekOffset - 1 %>" class="btn btn-outline-light">
