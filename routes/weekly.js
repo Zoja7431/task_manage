@@ -56,8 +56,9 @@ router.get('/weekly', async (req, res) => {
     console.log('User data:', req.session.user);
     console.log('Flash messages:', req.session.flash || []);
 
-    // Передаем user и flash для base.ejs
+    // Передаем все необходимые данные
     res.render('weekly', {
+      body: 'weekly', // Явно указываем body для base.ejs
       timelineData,
       weekTasks,
       user: req.session.user,
@@ -66,6 +67,7 @@ router.get('/weekly', async (req, res) => {
   } catch (err) {
     console.error('Weekly route error:', err.message, err.stack);
     res.status(500).render('error', {
+      body: 'error',
       error: 'Внутренняя ошибка сервера',
       stack: process.env.NODE_ENV === 'production' ? null : err.stack,
       user: req.session.user || null,

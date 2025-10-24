@@ -2,12 +2,15 @@
 <div id="weekly-page" class="container my-4">
   <h2 class="mb-4 text-light">Недельный обзор</h2>
   
+  <!-- Отладочный вывод -->
+  <% console.log('Rendering weekly.ejs', { user: user, flash: flash, timelineData: timelineData ? timelineData.length : 0, weekTasks: weekTasks ? Object.keys(weekTasks).length : 0 }); %>
+  
   <!-- Временная шкала -->
   <div class="timeline-container mb-4">
     <div class="timeline d-flex justify-content-between">
       <% if (timelineData && Array.isArray(timelineData)) { %>
         <% timelineData.forEach(function(day) { %>
-          <div class="timeline-day <%= day.isPast ? 'past' : '' %> <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity %>" data-date="<%= day.date %>">
+          <div class="timeline-day <%= day.isPast ? 'past' : '' %> <%= day.isToday ? 'today' : '' %> intensity-<%= day.intensity || 'empty' %>" data-date="<%= day.date %>">
             <div class="timeline-day-header">
               <div class="day-name"><%= day.dayName %></div>
               <div class="day-number"><%= day.dayNumber %></div>
@@ -24,7 +27,7 @@
     </div>
   </div>
   
-  <!-- Секции по дням с задачами -->
+  <!-- Секции по дням -->
   <div id="weekly-container">
     <% if (weekTasks && typeof weekTasks === 'object') { %>
       <% Object.keys(weekTasks).forEach(function(date) { %>

@@ -185,12 +185,14 @@
     </nav>
 
     <div class="container my-4">
-        <% flash.forEach(function(message) { %>
-            <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
-                <%= message.message %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% }); %>
+        <% if (flash && flash.length) { %>
+            <% flash.forEach(function(message) { %>
+                <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+                    <%= message.message %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% }); %>
+        <% } %>
         <%- body %>
     </div>
     <footer class="footer py-3">
