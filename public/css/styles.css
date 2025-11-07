@@ -1149,3 +1149,25 @@ html, body {
   pointer-events: auto;
 }
 
+.mailru-counter {
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.mailru-counter img {
+    display: block;
+    border: none;
+}
+
+.mailru-counter:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary);
+}
+
+.mailru-counter:hover img {
+    border-color: var(--primary);
+}
