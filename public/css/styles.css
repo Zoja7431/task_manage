@@ -1171,3 +1171,41 @@ html, body {
 .mailru-counter:hover img {
     border-color: var(--primary);
 }
+/* Яндекс.Метрика — полностью в стиле остальных счётчиков */
+.yandex-counter {
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.yandex-counter img {
+    display: block;
+    border: none;
+}
+
+.yandex-counter:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary);
+}
+
+.yandex-counter:hover img {
+    border-color: var(--primary);
+}
+
+/* У Rambler Top100 тоже добавим такие же стили (на случай, если скрипт вставит картинку напрямую) */
+#top100_container {
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+#top100_container:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary);
+}
