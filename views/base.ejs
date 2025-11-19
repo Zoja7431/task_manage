@@ -141,30 +141,26 @@
    <footer class="footer py-3">
         <div class="container text-center">
             <p class="mb-2 text-muted">© 2025 TaskFlow. Все права защищены.</p>
-
-            <!-- Один общий wrapper для всех счётчиков -->
             <div class="counter-wrapper">
-                <!-- LiveInternet -->
                 <a href="https://www.liveinternet.ru/click" target="_blank" class="liveinternet-counter" title="LiveInternet: статистика посещений">
-                    <img src="https://counter.yadro.ru/logo?14.11" alt="LiveInternet" width="88" height="31">
+                    <img src="https://counter.yadro.ru/logo?14.11" alt="LiveInternet Counter" width="88" height="31">
                 </a>
-
-                <!-- Rambler Top100 (скрипт сам вставит картинку в этот div) -->
-                <div class="rambler-counter" id="top100_container"></div>
-
-                <!-- Top.Mail.Ru -->
-                <a href="https://top-fwz1.mail.ru/jump?from=3705271" target="_blank" class="mailru-counter" title="Top.Mail.Ru">
-                    <img src="https://top-fwz1.mail.ru/counter?id=3705271;t=409;l=1" height="31" width="88" alt="Top.Mail.Ru" style="border:0;">
+                <div class="rambler-counter" id="counter" id="top100_container" title="Rambler's Top100" target="_blank"> </div>
+                <a href="https://top-fwz1.mail.ru/jump?from=3705271" class="mailru-counter" target="_blank" title="Top.Mail.Ru">
+                    <img src="https://top-fwz1.mail.ru/counter?id=3705271;t=409;l=1" height="31" width="88" alt="Top.Mail.Ru" style="border:0;" />
                 </a>
-
-                <!-- Яндекс.Метрика (теперь в том же стиле и с анимацией) -->
+                <div class="counter-wrapper" id="counter" id="Yandex_container" title="Яндекс.Метрика" target="_blank">
+                <!-- Yandex.Metrika informer -->
                 <a href="https://metrika.yandex.ru/stat/?id=104378247&from=informer"
-                target="_blank" rel="nofollow" class="yandex-counter"
-                title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)">
+                target="_blank" rel="nofollow" title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)">
                     <img src="https://informer.yandex.ru/informer/104378247/3_0_6666FFFF_6666FFFF_1_pageviews"
-                        width="88" height="31" alt="Яндекс.Метрика" style="border:0;">
+                        style="width:88px; height:31px; border:0;"
+                        alt="Яндекс.Метрика" />
                 </a>
+                <!-- /Yandex.Metrika informer -->
             </div>
+            </div>
+            
         </div>
     </footer>
     
